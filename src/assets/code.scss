@@ -1,0 +1,13 @@
+code.hljs {
+  border-radius: .5rem;
+  line-height: normal;
+  backdrop-filter: opacity(50%);
+  -webkit-backdrop-filter: opacity(50%);
+  overflow: auto;
+}
+
+:not(pre) > code.hljs {
+  border-radius: .3rem;
+  margin-inline: .5rem;
+  line-height: 1.75rem;
+}
