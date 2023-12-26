@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { computed, nextTick, ref, watch } from "vue";
 import securityApi from "@/apis/services/video-platform-security";
 import { useLocalStorage } from "@vueuse/core";
-import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
+import { DEFAULT_USER_AVATAR, getDefaultAvatar } from '@/constants/defaultImage';
 
 const useUserStore = defineStore('user', () => {
 
@@ -77,7 +77,7 @@ const useUserStore = defineStore('user', () => {
     // 等一下个tick，不然token可能还没写入storage
     await nextTick(async() => {
       if (newVal && !oldVal) {
-        avatar.value = DEFAULT_USER_AVATAR;
+        avatar.value = getDefaultAvatar(userInfo.value.name ?? '匿名用户');
         const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
         userInfoStorage.value = res.data.data ?? {};
       } else if (!newVal && oldVal) {

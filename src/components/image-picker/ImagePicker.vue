@@ -53,7 +53,7 @@ function handleImageRemove(path: string) {
 }
 
 /* 处理文件选择事件 */
-function onFileChange(e: Event) {
+function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   if (!target.files) {
     return;
@@ -68,6 +68,31 @@ function onFileChange(e: Event) {
   notify();
 }
 
+/* 处理拖动排序事件 */
+const dragIndex = ref<number>(-1);
+
+function handleDragStart(e: DragEvent, index: number) {
+  console.log('drag start', index);
+  dragIndex.value = index;
+}
+
+function handleDragEnter(e: DragEvent, index: number) {
+  console.log('drag enter', index);
+  e.preventDefault();
+  if (dragIndex.value != index) {
+    const files = form.files;
+    const paths = form.paths;
+    const dragFile = files[dragIndex.value];
+    const dragPath = paths[dragIndex.value];
+    files.splice(dragIndex.value, 1);
+    paths.splice(dragIndex.value, 1);
+    files.splice(index, 0, dragFile);
+    paths.splice(index, 0, dragPath);
+    // dragIndex.value = -1;
+    notify();
+  }
+}
+
 /* 接收modelValue更新 */
 watch(() => props.modelValue, (value) => {
   if (!value) {
@@ -79,6 +104,7 @@ watch(() => props.modelValue, (value) => {
 
 /* 发送emit通知 */
 function notify() {
+  console.log(form.files);
   emit('update:modelValue', form.files.map((file, index) => {
     return {
       file,
@@ -91,12 +117,16 @@ function notify() {
 
 <template>
   <div class="image-picker">
-    <input ref="inputRef" type="file" multiple accept="image/*" @change="onFileChange" />
-    <div class="image-picker__preview">
-      <div class="image-picker__preview__item" v-for="path in form.paths" :key="path">
-        <img :src="path" alt="picker-preview" />
-        <CloseOne class="image-picker__preview__item__del" size="1.5rem" theme="filled" @click="handleImageRemove(path)" />
-      </div>
+    <input ref="inputRef" type="file" multiple accept="image/*" @change="handleFileChange" />
+    <div class="image-picker__preview" @dragover.prevent>
+      <transition-group name="list">
+        <div class="image-picker__preview__item" v-for="(path, i) in form.paths" :key="path"
+             draggable="true" @dragover.prevent
+             @dragstart="(e) => handleDragStart(e, i)" @dragenter="(e) => handleDragEnter(e, i)">
+          <img :src="path" alt="picker-preview" draggable="false" />
+          <CloseOne class="image-picker__preview__item__del" size="1.5rem" theme="filled" @click="handleImageRemove(path)" />
+        </div>
+      </transition-group>
       <div v-if="displaySelect" class="image-picker__preview__select">
         <Plus class="image-picker__preview__select__plus" size="2.5rem" theme="outline" @click="selectImage" />
       </div>
@@ -119,6 +149,7 @@ function notify() {
       position: relative;
       width: 5rem;
       height: 5rem;
+      cursor: pointer;
 
       &:hover {
         .image-picker__preview__item__del {
@@ -162,4 +193,7 @@ function notify() {
     }
   }
 }
+</style>
+<style>
+@import "@/assets/animations.scss";
 </style>

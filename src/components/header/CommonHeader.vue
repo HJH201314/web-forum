@@ -42,12 +42,7 @@ const leftEntries = ref<Entry[]>([
 ]);
 /* 右侧列表 */
 const rightEntries = ref<Entry[]>([
-  {
-    key: "message",
-    name: "消息",
-    icon: 'message',
-    href: "/message",
-  },
+
 ]);
 
 const router = useRouter();
@@ -203,8 +198,17 @@ function handleSearch(keyword?: string) {
       <ul class="left-entry">
         <li style="display: flex;"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.5rem; object-fit: cover;" /></li>
         <li v-for="entry in leftEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
-          <span>{{ entry.name }}</span>
-          <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
+          <CusPopover position="bottom">
+            <template #body>
+              <span>{{ entry.name }}</span>
+              <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
+            </template>
+            <template #popover>
+              <div v-if="entry.key == 'history'">
+
+              </div>
+            </template>
+          </CusPopover>
         </li>
       </ul>
       <div class="center-search-container" ref="searchContainer">

@@ -15,6 +15,7 @@ import Spinning from "@/components/spinning/Spinning.vue";
 import { useQuery } from "@tanstack/vue-query";
 import { getUserInfo } from '@/stores/publicUserInfo';
 import CusButton from '@/components/button/CusButton.vue';
+import { useIntersectionObserver } from '@vueuse/core';
 
 const userStore = useUserStore();
 
@@ -145,6 +146,7 @@ async function handlePublishPost() {
     if (res.data?.code == 200) {
       showToast({ type: 'success', text: '发布成功' });
       clearInput();
+      currentPage.value = 1;
       refetchPosts();
     } else {
       showToast({ type: 'danger', text: '发布失败' });
@@ -164,9 +166,12 @@ function handlePostDeleted(id: number) {
   });
 }
 
-function handleLoadMore() {
+async function handleLoadMore() {
   currentPage.value++;
-  refetchPosts();
+  await refetchPosts();
+  await delay(100);
+  observeLoadMore.pause();
+  observeLoadMore.resume();
 }
 
 function clearInput() {
@@ -178,6 +183,16 @@ function clearInput() {
   currentPage.value = 1;
   posts.value = [];
 }
+
+const loadMoreRef = ref<HTMLDivElement>();
+
+const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting }]) => {
+  if (isIntersecting) {
+    handleLoadMore();
+  }
+}, {
+  threshold: 0,
+});
 </script>
 
 <template>
@@ -191,8 +206,8 @@ function clearInput() {
           </div>
           <div class="stats">
             <div id="post-left-user-follow" class="stats-item"><span>{{ 1024 }}</span><span>成长值</span></div>
-            <div id="post-left-user-fans" class="stats-item"><span>{{ 1 }}</span><span>关注</span></div>
-            <div id="post-left-user-fans" class="stats-item"><span>{{ 2 }}</span><span>粉丝</span></div>
+            <div id="post-left-user-fans" class="stats-item"><span>{{ 11 }}</span><span>帖子</span></div>
+            <div id="post-left-user-fans" class="stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
           </div>
         </section>
         <section class="post-left-live">
@@ -204,7 +219,7 @@ function clearInput() {
           <div class="header">
             <div class="topic">
               <topic theme="outline" size="1rem"/>
-              <span>选择话题</span>
+              <span style="margin-left: .5rem;">选择板块</span>
             </div>
             <div v-show="publishForm.content" class="title">
               <input type="text" placeholder="标题（选填）" v-model="publishForm.title" />
@@ -239,7 +254,7 @@ function clearInput() {
                         @delete-post="(id) => handlePostDeleted(id)"
           />
           <div class="post-loading" v-if="postQueryStatus == 'pending'">加载中...</div>
-          <div class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
+          <div ref="loadMoreRef" class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
         </section>
       </main>
     </div>
@@ -397,12 +412,13 @@ function clearInput() {
       .actions {
         position: absolute;
         left: .25rem;
-        bottom: 0;
+        bottom: .25rem;
         right: .25rem;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
+        gap: .25rem;
         &-placeholder {
           height: 1.75rem;
           width: 100%;
