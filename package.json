@@ -15,7 +15,10 @@
   },
   "dependencies": {
     "@icon-park/vue-next": "^1.4.2",
+    "@tanstack/vue-query": "^5.14.6",
+    "@vueuse/core": "^10.7.0",
     "axios": "^1.6.2",
+    "easy-typer-js": "^2.1.0",
     "pinia": "^2.1.7",
     "sass": "^1.69.5",
     "vue": "^3.3.11",

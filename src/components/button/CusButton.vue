@@ -62,7 +62,7 @@ function handleClick() {
 
 <template>
   <div class="button" @click="handleClick">
-    <button ref="buttonRef" :style="buttonStyle" :class="{'disabled': props.disabled}">
+    <button ref="buttonRef" :style="buttonStyle" :class="{'disabled': props.disabled}" type="button">
       <slot></slot>
       <span class="button-text" v-if="props.text">{{ props.text }}</span>
     </button>

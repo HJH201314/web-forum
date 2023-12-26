@@ -40,5 +40,43 @@ export default defineConfig({
   },
   server: {
     port: 8765,
+    proxy: {
+      // 修改target，指向相应模块需要请求的服务端/Mock地址
+      '/api/security': {
+        target: 'http://172.29.16.37:8848/',
+        // target: 'http://127.0.0.1:4523/m1/3578335-0-default/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/security/, ''),
+      },
+      '/api/manage': {
+        target: 'http://172.29.16.37:8849/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/manage/, ''),
+      },
+      '/api/admin': {
+        target: 'http://172.29.16.37:8850/',
+        // target: 'http://127.0.0.1:4523/m1/3578335-0-b56c7805/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/admin/, ''),
+      },
+      '/api/comment': {
+        target: 'http://172.29.16.37:8851/',
+        // target: 'http://127.0.0.1:4523/m1/3578335-0-a03db424/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/comment/, ''),
+      },
+      '/api/star': {
+        target: 'http://172.29.16.37:8852/',
+        // target: 'http://127.0.0.1:4523/m1/3578335-0-0c83f97b/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/star/, ''),
+      },
+      '/api/minio': {
+        target: 'http://172.29.16.37:9000/',
+        // target: 'http://127.0.0.1:4523/m1/3578335-0-0c83f97b/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/minio/, ''),
+      },
+    },
   },
 });
