@@ -2,7 +2,6 @@
 
 import { nextTick, ref, watch } from 'vue';
 import PreviewManager, { type ImagePreviewProps } from '@/components/image-preview/ImagePreview';
-import { delay } from '@/utils/delay';
 import Spinning from '@/components/spinning/Spinning.vue';
 
 const props = withDefaults(defineProps<ImagePreviewProps>(), {

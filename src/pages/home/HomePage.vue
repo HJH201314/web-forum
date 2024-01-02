@@ -4,6 +4,7 @@ import CusButton from '@/components/button/CusButton.vue';
 import { useRouter } from 'vue-router';
 import useUserStore from '@/stores/useUserStore';
 import showLoginModal from '@/components/login-modal/LoginModal';
+import useGlobal from '@/commands/useGlobal';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -11,13 +12,15 @@ const router = useRouter();
 function handleLogout() {
   userStore.logout();
 }
+
+const globe = useGlobal();
 </script>
 
 <template>
   <div class="home-page">
     <div class="title">
       <img class="logo" src="/x-logo.png" alt="logo" />
-      <span class="text">Fast, Convenient</span>
+      <span class="text" :class="{'text--small': globe.isSmallScreen}">Fast, Convenient</span>
     </div>
     <div class="actions">
       <CusButton type="primary" text="文档" @click="router.push('/login')"></CusButton>
@@ -63,6 +66,7 @@ function handleLogout() {
     > .text {
       font-size: 72px;
       font-weight: bold;
+      text-align: center;
       background-size: 200% 100%;
       background-image: linear-gradient(-135deg, #5260ac, #5260ac6F, #5260ac, #5260ac6F, #5260ac);
       background-clip: text;
@@ -77,6 +81,11 @@ function handleLogout() {
         100% {
           background-position: -90% 0;
         }
+      }
+
+      &--small {
+        line-height: 70px;
+        font-size: 64px;
       }
     }
   }

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import EasyTyper from 'easy-typer-js';
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { Close, Right, Switch } from "@icon-park/vue-next";
+import { Close, Right, Switch, Mail, Phone } from "@icon-park/vue-next";
 import CommonModal from "@/components/modal/CommonModal.vue";
 import type { CommonModalFunc } from "@/components/modal/CommonModal";
 import useUserStore from "@/stores/useUserStore";
 import showToast from "@/components/toast/toast";
 import Spinning from "@/components/spinning/Spinning.vue";
 import { delay } from "@/utils/delay";
+import useGlobal from '@/commands/useGlobal';
 
 const props = withDefaults(defineProps<{
   showByDefault?: boolean;
@@ -72,22 +73,22 @@ const emoji = ref('🚀');
 function init() {
   emoji.value = '🚀';
   // @ts-ignore
-  typer.value = new EasyTyper(typerObj, ['DILIDILI']);
+  typer.value = new EasyTyper(typerObj, ['XForum']);
 }
 
 function handleChangeMode() {
   loginForm.mode = (loginForm.mode == 'login' ? 'register' : 'login');
   if (loginForm.mode == 'login') {
     // @ts-ignore
-    typer.value = new EasyTyper(typerObj, 'DILIDILI');
+    typer.value = new EasyTyper(typerObj, 'XForum');
   } else {
     // @ts-ignore
-    typer.value = new EasyTyper(typerObj, '注册DILI');
+    typer.value = new EasyTyper(typerObj, '立即注册');
   }
 }
 
 const smsLoading = ref(false);
-const refetchPinTimer = ref<NodeJS.Timeout>();
+const refetchPinTimer = ref<number>();
 async function handleGetSmsCode() {
   if (smsLoading.value || smsTip.value.endsWith('s')) {
     showToast({ text: '现在点不得！', position: 'bottom', type: 'warning' })
@@ -205,12 +206,13 @@ watch(() => userStore.isLogin, (v) => {
     emoji.value = '🎉';
     // @ts-ignore
     typer.value = new EasyTyper(typerObj, '欢迎回来');
-    showToast({ text: `登录成功，欢迎回来，UUID:${userStore.token}`, position: 'top' });
     setTimeout(() => {
       show.value = false;
     }, 1500);
   }
 });
+
+const globe = useGlobal();
 </script>
 
 <template>
@@ -219,12 +221,17 @@ watch(() => userStore.isLogin, (v) => {
       <div class="login">
         <Close class="login-close" size="20" @click="() => refLoginModal?.close()" />
         <div style="margin-top: .5rem;">
-          <span class="sidebar-logo sidebar-logo-animation">DILIDILI</span>
+          <span class="sidebar-logo sidebar-logo-animation">X Forum</span>
           <span class="login-type">
-            <span class="login-type-item" :class="{'active': loginForm.type === 'phone'}" @click="loginForm.type = 'phone'">手机号{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
+            <span class="login-type-item" :class="{'active': loginForm.type === 'phone'}" @click="loginForm.type = 'phone'">
+              <Phone />
+              <span v-if="globe.isLargeScreen">手机号{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
+            </span>
             <span>&nbsp;|&nbsp;</span>
-            <span class="login-type-item" :class="{'active': loginForm.type === 'email'}" @click="loginForm.type = 'email'">邮箱{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
-            <span class="login-mode" @click="handleChangeMode"><Switch />切换{{ loginForm.mode == 'login' ? '注册' : '登录' }}</span>
+            <span class="login-type-item" :class="{'active': loginForm.type === 'email'}" @click="loginForm.type = 'email'">
+              <Mail />
+              <span v-if="globe.isLargeScreen">邮箱{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
+            </span>
           </span>
         </div>
         <div class="login-top">
@@ -234,7 +241,7 @@ watch(() => userStore.isLogin, (v) => {
         </div>
         <form class="login-bottom" @submit.prevent>
           <div class="login-form">
-            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="text" name="username" placeholder="请输入用户名/手机号" v-model="loginForm.phone" autocomplete="username" />
+            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="text" name="username" :placeholder="'请输入手机号'" v-model="loginForm.phone" autocomplete="username" />
             <input v-if="loginForm.type === 'email'" class="login-form-input" type="text" name="email" placeholder="请输入邮箱" v-model="loginForm.email" autocomplete="none" />
             <input v-if="loginForm.type === 'phone'" class="login-form-input" type="password" name="password" placeholder="请输入密码" v-model="loginForm.password" autocomplete="current-password" />
             <input v-if="loginForm.type === 'phone' && loginForm.mode == 'register'" class="login-form-input" type="password" name="retype" placeholder="请再次输入密码" v-model="loginForm.retypePwd" autocomplete="new-password" />
@@ -251,7 +258,9 @@ watch(() => userStore.isLogin, (v) => {
           </div>
         </form>
         <div class="login-footer">
-          我已阅读并同意<a href="http://localhost">《DiliDili用户协议》</a>
+          <div v-if="loginForm.mode == 'login'">还未注册？<a href="javascript:void(0)" @click="handleChangeMode">点此立即注册</a><br /></div>
+          <div v-if="loginForm.mode == 'register'">已有帐号？<a href="javascript:void(0)" @click="handleChangeMode">立即登录</a><br /></div>
+          我已阅读并同意<a href="http://localhost">《X产品论坛用户协议》</a>
         </div>
       </div>
     </template>
@@ -403,7 +412,7 @@ watch(() => userStore.isLogin, (v) => {
   font-size: 28px;
   &-animation {
     // background-image: linear-gradient(-135deg, #41e0a3, #56d8c0, #dc8bc3, #56d8c0, #41e0a3, #56d8c0, #dc8bc3, #56d8c0, #41e0a3);
-    background-image: linear-gradient(-135deg, #418ae0, #56a0d8, #dc8bc3, #56a0d8, #418ae0, #56a0d8, #dc8bc3, #56a0d8, #418ae0);
+    background-image: linear-gradient(-135deg, #418ae0, #56a0d8, #5c6bc0, #56a0d8, #418ae0, #56a0d8, #5c6bc0, #56a0d8, #418ae0);
     -webkit-text-fill-color: rgba(0,0,0,0);
     background-clip: text;
     background-size: 200% 200%;

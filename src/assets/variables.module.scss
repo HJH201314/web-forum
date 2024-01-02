@@ -48,9 +48,9 @@ $color-secondary-lighter: $color-pink-200;
 $color-secondary: $color-pink-400;
 $color-secondary-darker: $color-pink-500;
 
-$linear-gradient-primary: linear-gradient(180deg, $color-teal-300, $color-primary-darker);
-$linear-gradient-primary-2: linear-gradient(150deg, $color-teal-300, $color-primary-darker);
-$linear-gradient-primary-3: linear-gradient(330deg, $color-teal-300, $color-primary-darker);
+$linear-gradient-primary: linear-gradient(180deg, $color-primary-lighter, $color-primary-darker);
+$linear-gradient-primary-2: linear-gradient(150deg, $color-primary-lighter, $color-primary-darker);
+$linear-gradient-primary-3: linear-gradient(330deg, $color-primary-lighter, $color-primary-darker);
 
 $ease-out-circ: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 $ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);

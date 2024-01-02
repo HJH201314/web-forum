@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<DateFormatProps>(), {
   date: '-',
   locale: 'zh',
   format: 'yyyy/MM/dd hh:mm:ss',
-  threshold: () => [6000, 604800000],
+  threshold: () => [6000, 60480000000],
   refreshRate: 0,
 });
 
@@ -32,7 +32,7 @@ const dateShow = computed(() => {
 });
 const refreshMark = ref(0); // refreshMark变动表示需要重新计算dateShow
 
-let refreshInterval = ref<NodeJS.Timeout | undefined>();
+let refreshInterval = ref<number>();
 function refresh() {
   refreshMark.value++;
 }

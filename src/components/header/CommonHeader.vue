@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch, computed } from "vue";
 import type { CSSProperties } from "vue";
-import { Search } from "@icon-park/vue-next";
+import { Search, Login } from "@icon-park/vue-next";
 import { useRouter } from "vue-router";
 import showToast from "@/components/toast/toast";
 import useUserStore from "@/stores/useUserStore";
@@ -15,6 +15,7 @@ import { DialogManager } from "@/components/dialog";
 import services from "@/apis/services";
 import ToastManager from "@/components/toast/ToastManager";
 import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
+import useGlobal from '@/commands/useGlobal';
 
 const props = defineProps<{
   searchBarStyle?: CSSProperties,
@@ -36,19 +37,18 @@ const leftEntries = ref<Entry[]>([
   {
     key: "post",
     name: "帖子",
-    icon: 'post',
+    icon: 'topic',
     href: "/post",
-  },
-  {
-    key: "to_be_continued",
-    name: "开发中...",
-    icon: 'home',
-    href: "/dev",
   },
 ]);
 /* 右侧列表 */
 const rightEntries = ref<Entry[]>([
-
+  {
+    key: "me",
+    name: "个人中心",
+    icon: 'user',
+    href: "/me",
+  },
 ]);
 
 const router = useRouter();
@@ -105,7 +105,7 @@ async function handleChangePassword() {
 function handleMeClick() {
   showToast({text: userStore.userInfo, position: 'top', duration: 'long'});
   if (userStore.isLogin) {
-    router.push('/space/me');
+    router.push('/me');
   }
 }
 
@@ -195,24 +195,24 @@ function handleSearch(keyword?: string) {
   // router.push(`/search?type=video&keyword=${form.searchVal}`)
   window.open(router.resolve(`/search?type=video&keyword=${form.searchVal}`).href, '_blank');
 }
+
+const globe = useGlobal();
 </script>
 
 <template>
-  <div class="common-header">
+  <div class="common-header" :class="{'small': globe.isSmallScreen}">
     <div class="header-placeholder" style="height: 3.5rem;"></div>
     <header ref="headerRef" :style="headerStyle">
       <ul class="left-entry">
-        <li style="display: flex;" @click="router.replace('/')"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.5rem; object-fit: cover;" /></li>
+        <li style="display: flex;" @click="router.replace('/')"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.25rem; object-fit: cover;" /></li>
         <li v-for="entry in leftEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
           <CusPopover position="bottom">
             <template #body>
-              <span>{{ entry.name }}</span>
-              <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
-            </template>
-            <template #popover>
-              <div v-if="entry.key == 'history'">
-
+              <div style="display: flex; flex-direction: row; align-items: center; gap: .25rem;">
+                <component :is="entry.icon" style="font-size: 1.5rem;"></component>
+                <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
               </div>
+              <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
             </template>
           </CusPopover>
         </li>
@@ -250,13 +250,9 @@ function handleSearch(keyword?: string) {
         <li v-for="entry in rightEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
           <CusPopover position="bottom">
             <template #body>
-              <span>{{ entry.name }}</span>
+              <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
+              <component :is="entry.icon" style="font-size: 1.5rem;"></component>
               <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
-            </template>
-            <template #popover>
-              <div v-if="entry.key == 'history'">
-
-              </div>
             </template>
           </CusPopover>
         </li>
@@ -264,7 +260,11 @@ function handleSearch(keyword?: string) {
       <CusPopover position="bottom" :enabled="userStore.isLogin">
         <template #body>
           <div class="nav-user-container" @click="handleMeClick">
-            <CusButton v-if="!userStore.isLogin" type="primary" @click="handleLoginClick" text="登录 / 注册"></CusButton>
+            <CusButton v-if="!userStore.isLogin" type="primary" @click="handleLoginClick" :text="globe.isLargeScreen ? '登录 / 注册' : ''"
+                       :button-style="{'padding': globe.isLargeScreen ? '.5rem 1rem' : '.5rem'}"
+            >
+              <Login size="1.25rem" />
+            </CusButton>
             <img class="nav-user-avatar" v-if="userStore.isLogin" :src="userStore.avatar ?? DEFAULT_USER_AVATAR"
                  alt="avatar" />
           </div>
@@ -299,12 +299,18 @@ header {
   //-webkit-backdrop-filter: blur(3px);
   //backdrop-filter: blur(3px);
   height: 3.5rem;
+  max-width: 100%;
+  overflow: hidden;
   padding: 0 1rem;
   display: flex;
   align-items: center;
   flex-direction: row;
   gap: 1em;
   z-index: 1;
+
+  .small & {
+    padding: 0;
+  }
 
   ul {
     height: 100%;
@@ -319,8 +325,15 @@ header {
     position: relative;
     height: 100%;
     cursor: pointer;
-    padding: 1rem;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
     box-sizing: border-box;
+    font-size: 1.25rem;
+
+    .small & {
+      padding: 0 .5rem;
+    }
 
     span {
       a {
@@ -332,7 +345,7 @@ header {
     .active-underline {
       position: absolute;
       content: '';
-      bottom: 0;
+      bottom: -.25rem;
       left: 0;
       right: 0;
       background-color: $color-primary;

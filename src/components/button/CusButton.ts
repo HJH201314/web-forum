@@ -3,7 +3,7 @@ import type { CSSProperties } from "vue";
 export type CusButtonProps = {
   text?: string;
   icon?: string;
-  type?: 'normal' | 'primary' | 'text';
+  type?: 'normal' | 'primary' | 'success' | 'warning' | 'danger' | 'text';
   backgroundColor?: string;
   fontColor?: string;
   shadow?: boolean;

@@ -25,10 +25,18 @@ const buttonStyle = computed(() => {
 });
 
 const backgroundColor = computed(() => {
-  if (props.type == 'primary') {
-    return props.backgroundColor || variables.colorPrimary;
-  } else {
-    return '#FFFFFF';
+  switch (props.type) {
+    case 'primary':
+      return props.backgroundColor || variables.colorPrimary;
+    case 'success':
+      return variables.colorSuccess;
+    case 'warning':
+      return variables.colorWarning;
+    case 'danger':
+      return variables.colorDanger;
+    default:
+      return '#FFFFFF';
+
   }
 });
 const hoverBackgroundColor = computed(() => {
@@ -40,7 +48,7 @@ const activeBackgroundColor = computed(() => {
 
 const fontColor = computed(() => {
   if (props.fontColor) return props.fontColor;
-  if (props.type == 'primary') {
+  if (props.type != 'normal' && props.type != 'text') {
     return '#FFFFFF';
   } else {
     return variables.colorBlack;

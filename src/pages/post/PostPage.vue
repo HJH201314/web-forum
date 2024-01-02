@@ -15,6 +15,7 @@ import Spinning from "@/components/spinning/Spinning.vue";
 import { getUserInfo } from '@/stores/publicUserInfo';
 import CusButton from '@/components/button/CusButton.vue';
 import { useIntersectionObserver } from '@vueuse/core';
+import useGlobal from '@/commands/useGlobal';
 
 const userStore = useUserStore();
 
@@ -35,16 +36,9 @@ const publishForm = reactive({
 
 const router = useRouter();
 
-onMounted(() => {
-  Promise.all([
-    getPosts(),
-  ]);
-});
-
 const posts = ref<PostItemCardProps[]>([]);
-const currentPage = ref(1);
+const currentPage = ref(0); // 首页为1，但是handleLoadMore会先+1，所以初始值为0
 const hasNoMore = ref(false);
-const reachBottom = ref(false);
 
 const postResult = ref<API.Update[]>();
 
@@ -67,11 +61,6 @@ watch(() => postResult.value, async () => {
       images: JSON.parse(item.urls ?? '[]'),
       content: item.content ? decodeURIComponent(item.content) : '',
     });
-  }
-  console.log(posts.value.length, hasNoMore.value);
-  if (posts.value.length == 0 && !hasNoMore.value) {
-    currentPage.value += 1;
-    await getPosts();
   }
   postResult.value = []; // 处理完成后清空
 });
@@ -148,6 +137,13 @@ async function handleLoadMore() {
   observeLoadMore.resume();
 }
 
+const MAX_CONTENT_LENGTH = 1000;
+function handleContentInput() {
+  if (publishForm.content.length > MAX_CONTENT_LENGTH) {
+    publishForm.content = publishForm.content.slice(0, MAX_CONTENT_LENGTH);
+  }
+}
+
 function clearInput() {
   publishForm.pid = 1;
   publishForm.topic = '';
@@ -158,8 +154,8 @@ function clearInput() {
   posts.value = [];
 }
 
+/* 无限加载控制 */
 const loadMoreRef = ref<HTMLDivElement>();
-
 const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting }]) => {
   if (isIntersecting) {
     handleLoadMore();
@@ -167,16 +163,19 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
 }, {
   threshold: 0,
 });
+
+/* 小屏适配 */
+const globe = useGlobal();
 </script>
 
 <template>
   <div class="post">
     <div class="post-container">
-      <aside class="post-left">
-        <section ref="postLeftUserRef" class="post-left-user">
+      <aside class="post-left" v-if="globe.isLargeScreen">
+        <section ref="postLeftUserRef" class="post-left-user" v-if="userStore.isLogin">
           <div>
             <div class="avatar"><img :src="userStore.avatar ?? DEFAULT_USER_AVATAR" alt="post-user-avatar" /></div>
-            <div class="right"><span class="username">{{ userStore.userInfo.name ?? '匿名用户' }}</span><br /><span class="vip">初级用户</span></div>
+            <div class="right"><span class="username">{{ userStore.userInfo?.name ?? '匿名用户' }}</span><br /><span class="vip">初级用户</span></div>
           </div>
           <div class="stats">
             <div id="post-left-user-follow" class="stats-item"><span>{{ 1024 }}</span><span>成长值</span></div>
@@ -189,7 +188,7 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
         </section>
       </aside>
       <main class="post-center">
-        <section class="post-center-publish">
+        <section v-if="userStore.isLogin" class="post-center-publish">
           <div class="header">
             <div class="topic">
               <topic theme="outline" size="1rem"/>
@@ -200,12 +199,12 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
             </div>
           </div>
           <div class="input">
-            <textarea placeholder="写下你的用户故事..." v-model="publishForm.content" />
+            <textarea placeholder="写下你的用户故事..." v-model="publishForm.content" @input="handleContentInput" />
             <ImagePicker ref="imagePickerRef" :show-select-on-empty="false" show-select-not-empty v-model="publishForm.images" />
             <div class="actions-placeholder"></div>
             <div class="actions">
               <div class="action" @click="handleImageSelect"><span class="icon"><instagram theme="outline"/></span></div>
-              <span class="length-tip">{{ publishForm.content.length }} / 1000</span>
+              <span class="length-tip">{{ publishForm.content.length }} / {{ MAX_CONTENT_LENGTH }}</span>
               <div class="action"><span class="icon"><setting-one theme="outline"/></span></div>
               <CusButton type="primary" @click="handlePublishPost" :disabled="uploading" text="发布"><Spinning :show="uploading" /></CusButton>
             </div>
@@ -231,6 +230,14 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
           <div ref="loadMoreRef" class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
         </section>
       </main>
+      <aside class="post-right" v-if="globe.isLargeScreen">
+        <section class="post-right-notice">
+          站点公告
+        </section>
+        <section class="post-right-topics">
+          热议话题
+        </section>
+      </aside>
     </div>
   </div>
 </template>
@@ -243,10 +250,10 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
   &-container {
     position: relative;
     margin: 0 auto;
-    padding: 1rem 3rem;
+    padding: 1rem;
     width: 100%;
-    max-width: 1440px;
     display: flex;
+    justify-content: center;
     flex-direction: row;
     gap: .5rem;
   }
@@ -330,7 +337,8 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
   }
 
   &-center {
-    width: 60%;
+    flex: 1;
+    max-width: 960px;
     height: 100%;
     display: flex;
     flex-direction: column;

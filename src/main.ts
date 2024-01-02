@@ -10,6 +10,8 @@ import router from './router';
 import { VueQueryPlugin } from '@tanstack/vue-query';
 import shake from '@/commands/shake';
 
+import * as IconParkIcons from "@icon-park/vue-next";
+
 const app = createApp(App);
 
 app.use(createPinia());
@@ -20,5 +22,10 @@ app.use(VueQueryPlugin);
 app.directive('shake', {
   updated: shake,
 });
+
+// 注册icon_park图标
+for (const [key, component] of Object.entries(IconParkIcons)) {
+  app.component(key, component);
+}
 
 app.mount('#app');

@@ -13,6 +13,7 @@ import CusButton from "@/components/button/CusButton.vue";
 import CusPopover from "@/components/popover/CusPopover.vue";
 import variables from "@/assets/variables.module.scss";
 import { DialogManager } from "@/components/dialog";
+import useGlobal from '@/commands/useGlobal';
 
 const props = withDefaults(defineProps<{
   postId: number; // 动态id
@@ -68,7 +69,7 @@ const currentPage = ref(MINIMUM_PAGE);
 const {data: commentsResult, refetch: refetchComments, status: commentQueryStatus} = useQuery({
   queryKey: ['comments', props.postId, currentPage.value],
   queryFn: getComments,
-})
+});
 
 watchEffect(async () => {
   if (commentQueryStatus.value !== 'success') return;
@@ -102,9 +103,9 @@ watchEffect(async () => {
       createTime: item.createTime ?? '',
       subComments: subComments,
       totalSubCommentCnt: totalSubComments,
-    })
+    });
   }
-})
+});
 
 const form = reactive({
   comment: '',
@@ -139,7 +140,7 @@ async function getComments() {
       page: currentPage.value,
       size: 5,
       sortBy: sortMode.value === 'hot' ? 'likeNum' : 'createTime',
-      uid: userStore.userInfo.id!,
+      uid: userStore.userInfo.id ?? -1,
     });
     commentCount.value = result.data?.data?.total ?? 0;
     emit('update-comment-num', commentCount.value);
@@ -155,7 +156,7 @@ async function getSubComments(comment: CommentItem) {
       pid: comment.id,
       page: comment.currentPage ?? 0,
       size: 3,
-      uid: userStore.userInfo.id!,
+      uid: userStore.userInfo.id ?? -1,
     });
     if (res.data.code == 200) {
       comments.value.forEach((item, index) => {
@@ -300,6 +301,10 @@ async function handleCommentToGround(commentId: string) {
 
 const likeCacheStore = useLikeCacheStore();
 async function handleLike(pid: string, isChild: boolean, cid: string = '', pUid: number) {
+  if (!userStore.isLogin) {
+    showToast({position: 'top', text: '请登录以进行点赞'});
+    return;
+  }
   try {
     const flag = likeCacheStore.isLiked(isChild ? cid : pid) ? -1 : 1;
     let res;
@@ -348,6 +353,10 @@ async function handleLike(pid: string, isChild: boolean, cid: string = '', pUid:
   }
 }
 async function handleDislike(pid: string, isChild: boolean, cid: string = '', pUid: number) {
+  if (!userStore.isLogin) {
+    showToast({position: 'top', text: '请登录以进行点踩'});
+    return;
+  }
   try {
     const id = isChild ? cid : pid;
     if (likeCacheStore.isLiked(id)) {
@@ -406,6 +415,10 @@ function changeReplyingComment(comment: CommentItem, subComment: CommentItem | u
 
 const replyPublishing = ref(false); // 正在上传回复
 async function handleReplyPublish() {
+  if (!userStore.isLogin) {
+    showToast({position: 'top', text: '请登录以进行回复'});
+    return;
+  }
   replyPublishing.value = true;
   try {
     let res;
@@ -452,10 +465,11 @@ function getCommentContentHtml(comment: CommentItem) {
   return html;
 }
 
+const globe = useGlobal();
 </script>
 
 <template>
-  <div class="comment-view">
+  <div class="comment-view" :class="{'small': globe.isSmallScreen}">
     <div class="header">
       <span class="title">评论</span>
       <span class="count">{{ commentCount }}</span>
@@ -463,7 +477,7 @@ function getCommentContentHtml(comment: CommentItem) {
       <span>|</span>
       <span class="sort-new" :class="{'active': sortMode == 'new'}" @click="changeSortMode('new')">最新</span>
     </div>
-    <div class="comment-publish">
+    <div class="comment-publish" v-if="userStore.isLogin">
       <div class="avatar">
         <img :src="userStore.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${userStore.userInfo.id}`" alt="avatar" />
       </div>
@@ -474,19 +488,20 @@ function getCommentContentHtml(comment: CommentItem) {
         <span>发布</span>
       </button>
     </div>
-    <div class="comment-list">
+    <div class="comment-no" v-if="!comments.length"><br />暂时还没有评论哦~</div>
+    <div class="comment-list" :class="{'small': globe.isSmallScreen}">
       <div class="item" v-for="comment in comments" :key="comment.id">
         <div class="avatar"><img :src="comment.userAvatar || `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${comment.userId}`" alt="avatar" /></div>
         <div class="body">
           <div class="header user-info">
             <span class="name">{{ comment.userName }}</span>
-            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>
+<!--            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>-->
           </div>
           <div class="content">{{ comment.content }}</div>
           <div class="footer">
             <DateFormat :date="comment.createTime" class="time" />
             <span class="like" :class="{'active': likeCacheStore.isLiked(comment.id)}" @click="handleLike(comment.id, false, '', comment.userId)"><thumbs-up theme="outline" size="1rem"/>{{ comment.likeCount }}</span>
-            <span class="dislike" :class="{'active': likeCacheStore.isDisliked(comment.id)}" @click="handleDislike(comment.id, false, '', comment.userId)"><thumbs-down theme="outline" size="1rem"/></span>
+            <span v-if="userStore.isLogin" class="dislike" :class="{'active': likeCacheStore.isDisliked(comment.id)}" @click="handleDislike(comment.id, false, '', comment.userId)"><thumbs-down theme="outline" size="1rem"/></span>
             <span class="reply" @click="changeReplyingComment(comment)">回复</span>
             <CusPopover style="margin-left: auto;" position="left">
               <template #body>
@@ -527,18 +542,18 @@ function getCommentContentHtml(comment: CommentItem) {
                 <div class="header">
                   <div class="user-info">
                     <span class="name">{{ subComment.userName }}</span>
-                    <span class="level" v-if="subComment.userLevel">Lv.{{ subComment.userLevel }}</span>
+<!--                    <span class="level" v-if="subComment.userLevel">Lv.{{ subComment.userLevel }}</span>-->
                   </div>
                   <span class="content" v-html="getCommentContentHtml(subComment)"></span>
                 </div>
                 <div class="footer">
                   <DateFormat :date="subComment.createTime" class="time" />
                   <span class="like" :class="{'active': likeCacheStore.isLiked(subComment.id)}" @click="handleLike(comment.id, true, subComment.id, subComment.userId)"><thumbs-up theme="outline" size="1rem"/>{{ subComment.likeCount }}</span>
-                  <span class="dislike" :class="{'active': likeCacheStore.isDisliked(subComment.id)}" @click="handleDislike(comment.id, true, subComment.id, subComment.userId)"><thumbs-down theme="outline" size="1rem"/></span>
+                  <span v-if="userStore.isLogin" class="dislike" :class="{'active': likeCacheStore.isDisliked(subComment.id)}" @click="handleDislike(comment.id, true, subComment.id, subComment.userId)"><thumbs-down theme="outline" size="1rem"/></span>
                   <span class="reply" @click="changeReplyingComment(comment, subComment)">回复</span>
                   <CusPopover style="margin-left: auto;" position="left">
                     <template #body>
-                      <CusButton><MoreOne /></CusButton>
+                      <CusButton v-if="userStore.isLogin"><MoreOne /></CusButton>
                     </template>
                     <template #popover>
                       <div style="display: flex; border-radius: .5rem; background-color: white; box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);">
@@ -651,9 +666,19 @@ function getCommentContentHtml(comment: CommentItem) {
     }
   }
 
+  > .comment-no {
+    color: $color-grey-500;
+    text-align: center;
+  }
+
   > .comment-list {
     margin-top: 1rem;
     margin-left: 1.75rem;
+
+    &.small {
+      margin-left: 1rem;
+    }
+
     .item {
       display: flex;
       gap: 1rem;

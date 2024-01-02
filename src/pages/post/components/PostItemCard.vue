@@ -1,4 +1,3 @@
-<!-- 动态 -->
 <script setup lang="ts">
 
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
@@ -11,9 +10,10 @@ import { convertPostImage } from "@/pages/post/utils/image";
 import adminApi from "@/apis/services/video-platform-admin";
 import showToast from "@/components/toast/toast";
 import useUserStore from "@/stores/useUserStore";
-import ImagePreview from "@/components/image-preview/ImagePreview.vue";
 import commentApi from "@/apis/services/video-platform-comment";
 import PreviewManager from '@/components/image-preview/ImagePreview';
+import { DialogManager } from '@/components/dialog';
+import CusPopover from '@/components/popover/CusPopover.vue';
 
 const props = withDefaults(defineProps<PostItemCardProps>(), {
   type: 'post',
@@ -67,11 +67,9 @@ const userStore = useUserStore();
 const postTypeDesc = computed(() => {
   switch (props.type) {
     case 'post':
-      return '发表了动态';
+      return '发布了帖子';
     case 'video':
       return '发布了视频';
-    case 'c':
-      return '发布了专栏';
     default:
       return '';
   }
@@ -103,14 +101,25 @@ function handleDeletePost() {
     showToast({ text: '别删别人的啊', type: 'danger' });
     return;
   }
-  adminApi.updatesController.deleteEssayByIdUsingDelete({
-    id: props.postId,
-  }).then(res => {
-    if (res.data.code == 200) {
-      showToast({ text: '删除成功', type: 'success' });
-    }
-  }).catch();
-  emit('delete-post', props.postId);
+  DialogManager.commonDialog({
+    title: '删除动态',
+    content: '确定要删除这条动态吗？',
+    confirmButtonProps: {
+      text: '删除',
+      backgroundColor: 'danger',
+    },
+    onConfirm: () => {
+      // 执行：删除动态
+      adminApi.updatesController.deleteEssayByIdUsingDelete({
+        id: props.postId,
+      }).then(res => {
+        if (res.data.code == 200) {
+          showToast({ text: '删除成功', type: 'success' });
+        }
+      }).catch();
+      emit('delete-post', props.postId);
+    },
+  });
 }
 
 const expandType = ref(props.defaultTab ?? 'none');
@@ -139,19 +148,16 @@ function toggleMore() {
 const likeClicked = ref(false);
 const likeCount = ref(props.likeCount);
 function handleLikeClick() {
+  if (!userStore.isLogin) {
+    showToast({position: 'top', text: '请登录以进行点赞'});
+    return;
+  }
   likeClicked.value = !likeClicked.value;
   likeCount.value += likeClicked.value ? 1 : -1;
 }
 
 const largeImage = ref(''); // 放大查看的image
-const previewingImage = ref(''); // modal预览的image
 function handlePreviewImage(image: string) {
-  // if (largeImage.value == image) {
-  //   largeImage.value = '';
-  // } else {
-  //   largeImage.value = image;
-  // }
-  // previewingImage.value = convertPostImage(image);
   PreviewManager.image(convertPostImage(image));
 }
 
@@ -165,12 +171,18 @@ function handlePreviewImage(image: string) {
     <div class="post-list-item-header">
       <div class="username">{{ props.userName }}</div>
       <div class="desc"><DateFormat :date="props.createTime" /> · {{ postTypeDesc }}</div>
-      <transition name="opacity-circ">
-        <div class="more-actions" v-if="showMore">
-          <div class="delete" @click="handleDeletePost"><DeleteOne theme="outline" size="1.25rem" /></div>
-        </div>
-      </transition>
-      <div class="more" @click="toggleMore"><MoreOne theme="outline" size="1.25rem" /></div>
+      <CusPopover>
+        <template #body>
+          <div class="more" v-if="userStore.isLogin"><MoreOne theme="outline" size="1.25rem" /></div>
+        </template>
+        <template #popover>
+          <div class="more-actions">
+            <div class="delete" v-if="userStore.userInfo.id == props.userId" @click="handleDeletePost">
+              <DeleteOne theme="outline" size="1.25rem" />
+            </div>
+          </div>
+        </template>
+      </CusPopover>
     </div>
     <div class="post-list-item-body">
       <div ref="refContent" class="dili-text-ellipsis" :class="{'content-less': !readingMore}" v-html="props.content"></div>
@@ -182,7 +194,6 @@ function handlePreviewImage(image: string) {
       </div>
     </div>
     <div class="post-list-item-actions" v-if="props.showAction">
-      <div class="action" :class="{'active': expandType == 'forward'}" @click="expandPost('forward')"><ShareThree /> {{ props.forwardCount }}</div>
       <div class="action" :class="{'active': expandType == 'comment'}" @click="expandPost('comment')"><CommentOne :theme="expandType == 'comment' ? 'filled' : 'outline' " /> {{ commentCount }}</div>
       <div class="action" :class="{'active': props.isLiked || likeClicked}" @click="handleLikeClick"><ThumbsUp :theme="props.isLiked || likeClicked ? 'filled' : 'outline'" /> {{ likeCount }}</div>
     </div>
