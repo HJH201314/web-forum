@@ -9,6 +9,7 @@ import showToast from "@/components/toast/toast";
 import Spinning from "@/components/spinning/Spinning.vue";
 import { delay } from "@/utils/delay";
 import useGlobal from '@/commands/useGlobal';
+import CusInput from '@/components/input/CusInput.vue';
 
 const props = withDefaults(defineProps<{
   showByDefault?: boolean;
@@ -242,14 +243,26 @@ const globe = useGlobal();
         </div>
         <form class="login-bottom" @submit.prevent>
           <div class="login-form">
-            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="text" name="username" :placeholder="'请输入手机号'" v-model="loginForm.phone" autocomplete="username" />
-            <input v-if="loginForm.type === 'email'" class="login-form-input" type="text" name="email" placeholder="请输入邮箱" v-model="loginForm.email" autocomplete="none" />
-            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="password" name="password" placeholder="请输入密码" v-model="loginForm.password" autocomplete="current-password" />
-            <input v-if="loginForm.type === 'phone' && loginForm.mode == 'register'" class="login-form-input" type="password" name="retype" placeholder="请再次输入密码" v-model="loginForm.retypePwd" autocomplete="new-password" />
-            <div v-if="loginForm.type === 'email'" style="position: relative;">
-              <input class="login-form-input" type="text" name="sms" placeholder="请输入验证码" v-model="loginForm.pin" />
-              <div class="login-form-get-sms" @click="handleGetSmsCode"><Spinning style="margin-right: .5rem;" :show="smsLoading" color="#9e9e9e" />{{ smsTip }}</div>
-            </div>
+            <CusInput v-if="loginForm.type === 'phone'" class="login-form-item" placeholder="请输入手机号" v-model="loginForm.phone"
+                      :validations="[{name: 'pattern', value: /^1\d{10}$/, msg: '请输入正确的手机号'}]"
+                      :input-attrs="{type: 'tel', autocomplete: 'username'}" />
+            <CusInput v-if="loginForm.type === 'email'" class="login-form-item" placeholder="请输入邮箱" v-model="loginForm.email"
+                      :validations="[{name: 'pattern', value: /^.+@.+\..+$/, msg: '请输入正确的邮箱'}]"
+                      :input-attrs="{type: 'email', autocomplete: 'username'}" />
+            <!-- TODO: 细化密码提示 -->
+            <CusInput v-if="loginForm.type === 'phone'" class="login-form-item" placeholder="请输入密码" v-model="loginForm.password"
+                      :validations="[{name: 'pattern', value: /^.{6,30}$/, msg: '请输入正确的密码'}]"
+                      :input-attrs="{type: 'password', autocomplete: 'current-password'}" />
+            <CusInput v-if="loginForm.type === 'phone' && loginForm.mode == 'register'" class="login-form-item" placeholder="请再次输入密码" v-model="loginForm.retypePwd"
+                      :validation="() => loginForm.retypePwd == loginForm.password ? '' : '两次输入密码不一致'"
+                      :input-attrs="{type: 'password', autocomplete: 'new-password'}" />
+            <CusInput v-if="loginForm.type === 'email'" class="login-form-item" placeholder="请输入验证码" v-model="loginForm.pin"
+                      :validations="[{name: 'pattern', value: /^\d{6}$/, msg: '请输入正确的验证码'}]"
+                      :input-attrs="{type: 'text', autocomplete: 'off'}">
+              <template #append>
+                <div class="login-form-get-sms" @click="handleGetSmsCode"><Spinning style="margin-right: .5rem;" :show="smsLoading" color="#9e9e9e" />{{ smsTip }}</div>
+              </template>
+            </CusInput>
           </div>
           <div class="login-form-submit" v-shake="loginForm.shake" @click="handleLoginSubmit">
             <button style="outline: none; color: inherit;" :disabled="submitLoading" @submit.prevent="handleLoginSubmit">
@@ -390,6 +403,10 @@ const globe = useGlobal();
     display: flex;
     flex-direction: column;
     gap: .5rem;
+    &-item {
+      width: 100%;
+      font-size: 1.1rem;
+    }
     &-input {
       width: 100%;
       font-size: large;

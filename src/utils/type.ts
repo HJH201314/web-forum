@@ -5,3 +5,5 @@ export function recordToMap<K extends string, V>(record: Record<K, V>): Map<K, V
   });
   return map;
 }
+
+export type PickItemType<T> = T extends (infer U)[] ? U : never; // 获取数组元素类型

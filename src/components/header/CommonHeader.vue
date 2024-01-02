@@ -81,6 +81,12 @@ async function handleChangePassword() {
     title: '修改密码',
     content: '请输入新密码',
   }, {
+    validation: (v) => {
+      if (v.length < 6) {
+        return '密码长度不能小于6位';
+      }
+      return '';
+    },
     inputAttrs: {
       type: 'password',
     },
