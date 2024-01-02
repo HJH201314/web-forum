@@ -13,6 +13,7 @@ export type PostItemCardProps = {
   images?: string[]; // 动态图片
 
   // 特殊控制
+  singleUse?: boolean; // 是否单独使用（用在单独页面）
   showAction?: boolean; // 是否展示action
   defaultTab?: string; // 默认展开的tab
 };

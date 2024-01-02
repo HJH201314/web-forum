@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '@/pages/home/HomePage.vue';
 import PostPage from '@/pages/post/PostPage.vue';
+import PostDetailPage from '@/pages/post/PostDetailPage.vue';
 import LoginPage from '@/pages/login/LoginPage.vue';
 import MePage from '@/pages/me/MePage.vue';
 
@@ -17,6 +18,12 @@ const router = createRouter({
       path: '/post',
       name: 'post',
       component: PostPage,
+    },
+    {
+      path: '/post/:postId',
+      name: 'post-detail',
+      component: PostDetailPage,
+      props: true,
     },
     {
       path: '/me',

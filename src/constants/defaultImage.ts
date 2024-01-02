@@ -1,5 +1,13 @@
-export const DEFAULT_USER_AVATAR = 'https://avatars.githubusercontent.com/u/24362351?v=4';
-
-export function getDefaultAvatar(username: string) {
-  return `https://api.dicebear.com/7.x/pixel-art/svg?seed=${username}`;
+export function getDefaultAvatar(username: string = 'notlogin') {
+  return `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=${username}`;
 }
+
+export function getDefaultAvatarByUid(uid?: number) {
+  if (uid)
+    return getDefaultAvatar(`id${uid}`);
+  else
+    return getDefaultAvatar();
+}
+
+export const DEFAULT_USER_AVATAR = getDefaultAvatar('notlogin');
+
