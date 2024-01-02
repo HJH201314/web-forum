@@ -1,8 +1,7 @@
 import { defineStore } from "pinia";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import securityApi from "@/apis/services/video-platform-security";
 import { useLocalStorage } from "@vueuse/core";
-import { DEFAULT_USER_AVATAR, getDefaultAvatar } from '@/constants/defaultImage';
 
 const useUserStore = defineStore('user', () => {
 
@@ -11,7 +10,25 @@ const useUserStore = defineStore('user', () => {
   const token = computed(() => tokenStorage.value);
   const userInfoStorage = useLocalStorage<API.User>('user-info', {});
   const userInfo = computed(() => userInfoStorage.value);
-  const isLogin = computed(() => !!token.value);
+  const isLogin = computed(() => !!userInfo.value.id);
+
+  onMounted(async () => {
+    // 获取用户信息
+    await getUserInfo();
+  });
+
+  async function getUserInfo() {
+    try {
+      const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
+      userInfoStorage.value = res.data.data ?? {};
+      avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
+      console.log('user_info', userInfoStorage.value);
+    } catch (e) {
+      console.error(e);
+      userInfoStorage.value = {};
+      avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=notlogin`;
+    }
+  }
 
   const login = async (type: 'phone' | 'email', principal: string, credential: string) => {
     let res;
@@ -22,21 +39,17 @@ const useUserStore = defineStore('user', () => {
     }
     if (res?.data.code === 200) {
       tokenStorage.value = res.data.data ?? '';
+      await nextTick(async () => {
+        // 获取用户信息
+        const res2 = await securityApi.loginController.getCurrentUserUsingGet({token: tokenStorage.value});
+        userInfoStorage.value = res2.data.data ?? {};
+        avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res2.data.data?.id}`;
+        console.log('user_info', userInfoStorage.value);
+      });
       return true;
     } else {
       return false;
     }
-    // setTimeout(() => {
-    //   if ((type === 'password' && principal === 'guest' && credential === '123456') ||
-    //       (type === 'sms' && principal === '11111111111' && credential === '654321')
-    //   ) {
-    //     userId.value = 1;
-    //     avatar.value = 'https://img.yzcdn.cn/vant/cat.jpeg';
-    //
-    //   } else {
-    //
-    //   }
-    // }, 1000);
   };
 
   const sendPin = async (type: 'phone' | 'email', principal: string) => {
@@ -70,22 +83,9 @@ const useUserStore = defineStore('user', () => {
       // 无论如何，都清空token和用户信息
       tokenStorage.value = '';
       userInfoStorage.value = {};
+      avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=notlogin`;
     }
   };
-
-  watch(isLogin, async (newVal, oldVal) => {
-    // 等一下个tick，不然token可能还没写入storage
-    await nextTick(async() => {
-      if (newVal && !oldVal) {
-        avatar.value = getDefaultAvatar(userInfo.value.name ?? '匿名用户');
-        const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
-        userInfoStorage.value = res.data.data ?? {};
-      } else if (!newVal && oldVal) {
-        userInfoStorage.value = {};
-        avatar.value = undefined;
-      }
-    });
-  });
 
   return {
     token,

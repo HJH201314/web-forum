@@ -10,6 +10,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomePage,
+      meta: { showCommonHeader: false },
     },
     {
       path: '/post',
@@ -20,6 +21,7 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginPage,
+      meta: { showCommonHeader: false },
     },
   ],
 });

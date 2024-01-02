@@ -63,7 +63,7 @@ const progressStyle = computed(() => {
   > .progress-bar {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
+    border-radius: .75rem;
     position: relative;
     mask: radial-gradient(circle at center, transparent, transparent 55%, #000 57%, #000 100%);
   }

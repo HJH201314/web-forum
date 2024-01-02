@@ -34,6 +34,7 @@ const displaySelect = computed(() => {
 const form = reactive({
   files: [] as File[],
   paths: [] as string[],
+  previewingImage: ref<number>(-1),
 });
 
 /**
@@ -50,6 +51,12 @@ function handleImageRemove(path: string) {
   form.files.splice(index, 1);
   form.paths.splice(index, 1);
   notify();
+}
+
+/* 处理图片点击 */
+function handleImageClick(index: number) {
+  // 预览图片
+  form.previewingImage = index;
 }
 
 /* 处理文件选择事件 */
@@ -88,7 +95,8 @@ function handleDragEnter(e: DragEvent, index: number) {
     paths.splice(dragIndex.value, 1);
     files.splice(index, 0, dragFile);
     paths.splice(index, 0, dragPath);
-    // dragIndex.value = -1;
+    console.log(files, paths);
+    dragIndex.value = index;
     notify();
   }
 }
@@ -111,19 +119,32 @@ function notify() {
       path: form.paths[index],
     } as ImagePickerModelItem;
   }));
+  console.log(form.files.map((file, index) => {
+    return {
+      file,
+      path: form.paths[index],
+    } as ImagePickerModelItem;
+  }));
   emit('change', form.files);
+  console.log(form.files);
 }
 </script>
 
 <template>
   <div class="image-picker">
     <input ref="inputRef" type="file" multiple accept="image/*" @change="handleFileChange" />
+    <teleport to="body">
+      <div v-if="form.previewingImage != -1" class="image-picker__previewer" @click="form.previewingImage = -1">
+        <transition name="image-scale" appear><img v-if="form.previewingImage != -1" class="image-picker__previewer--img" :src="form.paths[form.previewingImage]" alt="picker-preview" draggable="false" /></transition>
+        <div class="image-picker__previewer--mask"></div>
+      </div>
+    </teleport>
     <div class="image-picker__preview" @dragover.prevent>
       <transition-group name="list">
         <div class="image-picker__preview__item" v-for="(path, i) in form.paths" :key="path"
              draggable="true" @dragover.prevent
              @dragstart="(e) => handleDragStart(e, i)" @dragenter="(e) => handleDragEnter(e, i)">
-          <img :src="path" alt="picker-preview" draggable="false" />
+          <img :src="path" alt="picker-preview" draggable="false" @click="handleImageClick(i)" />
           <CloseOne class="image-picker__preview__item__del" size="1.5rem" theme="filled" @click="handleImageRemove(path)" />
         </div>
       </transition-group>
@@ -140,6 +161,34 @@ function notify() {
   input {
     display: none;
   }
+  /* 预览器 */
+  &__previewer {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    cursor: pointer;
+
+    &--img {
+      border-radius: .5rem;
+      overflow: hidden;
+      box-sizing: border-box;
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    &--mask {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  }
+  /* 列表预览 */
   &__preview {
     display: flex;
     flex-wrap: wrap;
@@ -153,7 +202,7 @@ function notify() {
 
       &:hover {
         .image-picker__preview__item__del {
-          display: block;
+          scale: 1;
         }
       }
 
@@ -165,7 +214,7 @@ function notify() {
       }
 
       &__del {
-        display: none;
+        scale: 0;
         position: absolute;
         top: 0;
         right: 0;
@@ -173,6 +222,7 @@ function notify() {
         height: 1.5rem;
         cursor: pointer;
         color: transparentize($color-black-lighter, 0.3);
+        transition: scale .2s $ease-out-circ;
       }
     }
     &__select {
@@ -194,6 +244,18 @@ function notify() {
   }
 }
 </style>
-<style>
+<style lang="scss">
 @import "@/assets/animations.scss";
+.image-scale-enter-active,
+.image-scale-leave-active {
+  transition: scale .3s $ease-in-out-circ;
+}
+.image-scale-enter-from,
+.image-scale-leave-to {
+  scale: 0;
+}
+.image-scale-enter-to,
+.image-scale-leave-from {
+  scale: 1;
+}
 </style>

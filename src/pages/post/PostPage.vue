@@ -2,7 +2,7 @@
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
 import { computed, onMounted, reactive, ref, watch, watchEffect } from "vue";
-import { EmotionHappy, Instagram, AtSign, ChartHistogramTwo, Topic, SettingOne } from '@icon-park/vue-next';
+import { Instagram, Topic, SettingOne } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import { useRouter } from "vue-router";
@@ -12,7 +12,6 @@ import type { ImagePickerFunc, ImagePickerModel } from "@/components/image-picke
 import adminApi from "@/apis/services/video-platform-admin";
 import { delay } from "@/utils/delay";
 import Spinning from "@/components/spinning/Spinning.vue";
-import { useQuery } from "@tanstack/vue-query";
 import { getUserInfo } from '@/stores/publicUserInfo';
 import CusButton from '@/components/button/CusButton.vue';
 import { useIntersectionObserver } from '@vueuse/core';
@@ -37,29 +36,19 @@ const publishForm = reactive({
 const router = useRouter();
 
 onMounted(() => {
-  // if (!userStore.isLogin) {
-  //   // 未登录则跳转到登录页
-  //   showToast({ type: 'danger', text: '请先登录' });
-  //   router.replace({ name: 'home' });
-  // }
-  // Promise.all([
-  //   getPosts(),
-  // ]);
+  Promise.all([
+    getPosts(),
+  ]);
 });
 
-// TODO: 根据接口调整post类型
 const posts = ref<PostItemCardProps[]>([]);
 const currentPage = ref(1);
 const hasNoMore = ref(false);
 const reachBottom = ref(false);
 
-const { data: postResult, status: postQueryStatus, refetch: refetchPosts } = useQuery({
-  queryKey: ['posts', currentPage.value],
-  queryFn: getPosts,
-});
+const postResult = ref<API.Update[]>();
 
 watch(() => postResult.value, async () => {
-  if (postQueryStatus.value != 'success') return;
   if (!postResult.value) return;
   for (let item of postResult.value) {
     if (item.vid) continue; // 此处不处理视频
@@ -69,7 +58,7 @@ watch(() => postResult.value, async () => {
       postId: item.id ?? -1,
       userId: item.uid ?? -1,
       userName: userInfo.name ?? '测试用户',
-      avatar: DEFAULT_USER_AVATAR,
+      avatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.uid}`,
       forwardCount: 0,
       commentCount: 0,
       likeCount: 0,
@@ -82,8 +71,9 @@ watch(() => postResult.value, async () => {
   console.log(posts.value.length, hasNoMore.value);
   if (posts.value.length == 0 && !hasNoMore.value) {
     currentPage.value += 1;
-    await refetchPosts();
+    await getPosts();
   }
+  postResult.value = []; // 处理完成后清空
 });
 
 async function getPosts() {
@@ -96,26 +86,10 @@ async function getPosts() {
       showToast({ type: 'info', text: '没有更多啦' });
       hasNoMore.value = true;
     }
+    postResult.value = res.data.data;
     return res.data.data;
   } catch (e) {
     return [];
-  } finally {
-    // for (let i = 1; i <= 10; i++) {
-    //   posts.value.push({
-    //     type: 'post',
-    //     postId: i,
-    //     userId: 1,
-    //     userName: '测试用户',
-    //     avatar: DEFAULT_USER_AVATAR,
-    //     forwardCount: i + 3,
-    //     commentCount: i * i,
-    //     likeCount: i * i * i,
-    //     isLiked: false,
-    //     createTime: new Date().toLocaleString(),
-    //     images: [],
-    //     content: "测试".repeat(100),
-    //   });
-    // }
   }
 }
 
@@ -147,9 +121,9 @@ async function handlePublishPost() {
       showToast({ type: 'success', text: '发布成功' });
       clearInput();
       currentPage.value = 1;
-      refetchPosts();
+      await getPosts();
     } else {
-      showToast({ type: 'danger', text: '发布失败' });
+      showToast({ type: 'danger', text: `发布失败：${res.data?.message}` });
     }
   } catch (e) {
     showToast({ type: 'danger', text: '发布失败' });
@@ -168,7 +142,7 @@ function handlePostDeleted(id: number) {
 
 async function handleLoadMore() {
   currentPage.value++;
-  await refetchPosts();
+  await getPosts();
   await delay(100);
   observeLoadMore.pause();
   observeLoadMore.resume();
@@ -226,7 +200,7 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
             </div>
           </div>
           <div class="input">
-            <textarea placeholder="来分享点什么吧?" v-model="publishForm.content" />
+            <textarea placeholder="写下你的用户故事..." v-model="publishForm.content" />
             <ImagePicker ref="imagePickerRef" :show-select-on-empty="false" show-select-not-empty v-model="publishForm.images" />
             <div class="actions-placeholder"></div>
             <div class="actions">
@@ -253,7 +227,7 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
                         :images="item.images"
                         @delete-post="(id) => handlePostDeleted(id)"
           />
-          <div class="post-loading" v-if="postQueryStatus == 'pending'">加载中...</div>
+<!--          <div class="post-loading" v-if="postQueryStatus == 'pending'">加载中...</div>-->
           <div ref="loadMoreRef" class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
         </section>
       </main>
@@ -309,7 +283,7 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
         width: 4rem;
         height: 4rem;
         overflow: hidden;
-        border-radius: 50%;
+        border-radius: .75rem;
         img {
           width: 100%;
           height: 100%;
@@ -420,7 +394,7 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
         justify-content: flex-start;
         gap: .25rem;
         &-placeholder {
-          height: 1.75rem;
+          height: 2rem;
           width: 100%;
         }
         .action {

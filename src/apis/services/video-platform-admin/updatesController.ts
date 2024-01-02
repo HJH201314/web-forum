@@ -97,7 +97,7 @@ export async function publishUsingPost(
   return request<API.CommonResultString_>('/updates/essay', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/multipart/form-data',
     },
     params: {
       ...params,

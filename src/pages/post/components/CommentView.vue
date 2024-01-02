@@ -3,7 +3,6 @@ import { computed, onMounted, reactive, ref, watchEffect } from "vue";
 import useUserStore from "@/stores/useUserStore";
 import DateFormat from "@/components/date-format/DateFormat.vue";
 import { ThumbsUp, ThumbsDown, Left, Right, MoreOne, DeleteOne, ToTopOne } from "@icon-park/vue-next";
-import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
 import { useQuery } from "@tanstack/vue-query";
 import commentApi from "@/apis/services/video-platform-comment";
 import showToast, { quickToast } from "@/components/toast/toast";
@@ -69,7 +68,7 @@ const currentPage = ref(MINIMUM_PAGE);
 const {data: commentsResult, refetch: refetchComments, status: commentQueryStatus} = useQuery({
   queryKey: ['comments', props.postId, currentPage.value],
   queryFn: getComments,
-});
+})
 
 watchEffect(async () => {
   if (commentQueryStatus.value !== 'success') return;
@@ -93,7 +92,7 @@ watchEffect(async () => {
     comments.value.push({
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: DEFAULT_USER_AVATAR,
+      userAvatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       targetUsername: item.targetUsername,
@@ -103,9 +102,9 @@ watchEffect(async () => {
       createTime: item.createTime ?? '',
       subComments: subComments,
       totalSubCommentCnt: totalSubComments,
-    });
+    })
   }
-});
+})
 
 const form = reactive({
   comment: '',
@@ -117,7 +116,7 @@ function convertCommentVOToCommentItem(item: API.Comment, type: 'sub'): CommentI
     return {
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: DEFAULT_USER_AVATAR,
+      userAvatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       content: item.content ?? '',
@@ -145,7 +144,9 @@ async function getComments() {
     commentCount.value = result.data?.data?.total ?? 0;
     emit('update-comment-num', commentCount.value);
     return result.data?.data;
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 async function getSubComments(comment: CommentItem) {
@@ -167,7 +168,9 @@ async function getSubComments(comment: CommentItem) {
         }
       });
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 function changeSortMode(mode: 'hot'|'new') {
@@ -197,7 +200,9 @@ async function handleCommentPublish() {
     } else {
       showToast({position: 'top', text: '评论失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 async function handleCommentDelete(commentId: string) {
@@ -220,7 +225,9 @@ async function handleCommentDelete(commentId: string) {
     } else {
       showToast({position: 'top', text: '删除失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 async function handleSubCommentDelete(commentId: string, subCommentId: string) {
@@ -244,7 +251,9 @@ async function handleSubCommentDelete(commentId: string, subCommentId: string) {
     } else {
       showToast({position: 'top', text: '删除失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 async function handleCommentToTop(commentId: string) {
@@ -263,7 +272,9 @@ async function handleCommentToTop(commentId: string) {
     } else {
       showToast({position: 'top', text: '置顶失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 async function handleCommentToGround(commentId: string) {
@@ -282,7 +293,9 @@ async function handleCommentToGround(commentId: string) {
     } else {
       showToast({position: 'top', text: '取消置顶失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 const likeCacheStore = useLikeCacheStore();
@@ -330,7 +343,9 @@ async function handleLike(pid: string, isChild: boolean, cid: string = '', pUid:
     } else {
       showToast({position: 'top', text: '点赞失败'});
     }
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 async function handleDislike(pid: string, isChild: boolean, cid: string = '', pUid: number) {
   try {
@@ -340,7 +355,9 @@ async function handleDislike(pid: string, isChild: boolean, cid: string = '', pU
     }
     likeCacheStore.dislike(id);
     showToast({position: 'top', text: '点踩成功'});
-  } catch (ignore) { /* empty */ }
+  } catch (e) {
+    // ignore
+  }
 }
 
 function handleChangePage(paginationPage: number) {
@@ -448,7 +465,7 @@ function getCommentContentHtml(comment: CommentItem) {
     </div>
     <div class="comment-publish">
       <div class="avatar">
-        <img :src="userStore.avatar ?? DEFAULT_USER_AVATAR" alt="avatar" />
+        <img :src="userStore.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${userStore.userInfo.id}`" alt="avatar" />
       </div>
       <div class="input">
         <textarea placeholder="你猜我的评论区在等谁？" v-model="form.comment" />
@@ -459,7 +476,7 @@ function getCommentContentHtml(comment: CommentItem) {
     </div>
     <div class="comment-list">
       <div class="item" v-for="comment in comments" :key="comment.id">
-        <div class="avatar"><img :src="comment.userAvatar || DEFAULT_USER_AVATAR" alt="avatar" /></div>
+        <div class="avatar"><img :src="comment.userAvatar || `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${comment.userId}`" alt="avatar" /></div>
         <div class="body">
           <div class="header user-info">
             <span class="name">{{ comment.userName }}</span>
@@ -476,7 +493,7 @@ function getCommentContentHtml(comment: CommentItem) {
                 <CusButton><MoreOne /></CusButton>
               </template>
               <template #popover>
-                <div style="display: flex; border-radius: .5rem; background-color: white; box-shadow: 0px 0px 5px 0 rgba(0, 0, 0, 0.1);">
+                <div style="display: flex; border-radius: .5rem; background-color: white; box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);">
                   <CusButton @click="handleCommentDelete(comment.id)"
                               v-if="userStore.userInfo.id == comment.userId || userStore.userInfo.id == props.postUserId">
                     <DeleteOne theme="outline" :fill="variables.colorDanger" />
@@ -505,7 +522,7 @@ function getCommentContentHtml(comment: CommentItem) {
           </div>
           <div class="sub-comment-list">
             <div class="item" v-for="subComment in comment.subComments" :key="subComment.id">
-              <div class="avatar-small"><img :src="subComment.userAvatar || DEFAULT_USER_AVATAR"  alt="avatar-small"/></div>
+              <div class="avatar-small"><img :src="subComment.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=id${subComment.userId}`"  alt="avatar-small"/></div>
               <div class="body">
                 <div class="header">
                   <div class="user-info">
@@ -524,7 +541,7 @@ function getCommentContentHtml(comment: CommentItem) {
                       <CusButton><MoreOne /></CusButton>
                     </template>
                     <template #popover>
-                      <div style="display: flex; border-radius: .5rem; background-color: white; box-shadow: 0px 0px 5px 0 rgba(0, 0, 0, 0.1);">
+                      <div style="display: flex; border-radius: .5rem; background-color: white; box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);">
                         <CusButton @click="handleSubCommentDelete(comment.id, subComment.id)"
                                     v-if="userStore.userInfo.id == subComment.userId || userStore.userInfo.id == props.postUserId">
                           <DeleteOne theme="outline" :fill="variables.colorDanger" />
@@ -597,7 +614,7 @@ function getCommentContentHtml(comment: CommentItem) {
       width: 3rem;
       height: 3rem;
       > img {
-        border-radius: 50%;
+        border-radius: .5rem;
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -645,7 +662,7 @@ function getCommentContentHtml(comment: CommentItem) {
         width: 2.5rem;
         height: 2.5rem;
         img {
-          border-radius: 50%;
+          border-radius: .5rem;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -656,7 +673,7 @@ function getCommentContentHtml(comment: CommentItem) {
         width: 1.75rem;
         height: 1.75rem;
         img {
-          border-radius: 50%;
+          border-radius: .5rem;
           width: 100%;
           height: 100%;
           object-fit: cover;

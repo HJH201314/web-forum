@@ -292,7 +292,7 @@ function handleApiClick() {
       > img {
         width: 2.25rem;
         height: 2.25rem;
-        border-radius: 50%;
+        border-radius: .75rem;
         transition: transform .2s $ease-out-circ;
         &:hover {
           transform: rotate(-360deg);
@@ -305,7 +305,7 @@ function handleApiClick() {
       bottom: 0;
       width: .5rem;
       height: .5rem;
-      border-radius: 50%;
+      border-radius: .75rem;
       box-sizing: content-box;
       border: 2px solid $color-teal-20;
       background-color: $color-success;

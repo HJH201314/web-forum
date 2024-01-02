@@ -13,6 +13,7 @@ import showToast from "@/components/toast/toast";
 import useUserStore from "@/stores/useUserStore";
 import ImagePreview from "@/components/image-preview/ImagePreview.vue";
 import commentApi from "@/apis/services/video-platform-comment";
+import PreviewManager from '@/components/image-preview/ImagePreview';
 
 const props = withDefaults(defineProps<PostItemCardProps>(), {
   type: 'post',
@@ -150,7 +151,8 @@ function handlePreviewImage(image: string) {
   // } else {
   //   largeImage.value = image;
   // }
-  previewingImage.value = convertPostImage(image);
+  // previewingImage.value = convertPostImage(image);
+  PreviewManager.image(convertPostImage(image));
 }
 
 </script>
@@ -188,7 +190,6 @@ function handlePreviewImage(image: string) {
       <hr style="margin: .5rem;" />
       <CommentView v-if="expandType == 'comment'" :post-id="props.postId" :post-user-id="props.userId" @update-comment-num="n => commentCount = n" />
     </div>
-    <ImagePreview v-model="previewingImage" />
   </div>
 </template>
 
@@ -205,7 +206,7 @@ function handlePreviewImage(image: string) {
     & img {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
+      border-radius: .75rem;
     }
   }
   &-header {

@@ -34,10 +34,16 @@ type Entry = {
 /* 左侧列表 */
 const leftEntries = ref<Entry[]>([
   {
-    key: "home",
-    name: "首页",
-    icon: 'home',
+    key: "post",
+    name: "帖子",
+    icon: 'post',
     href: "/post",
+  },
+  {
+    key: "to_be_continued",
+    name: "开发中...",
+    icon: 'home',
+    href: "/dev",
   },
 ]);
 /* 右侧列表 */
@@ -53,7 +59,7 @@ function handleEntryClick(e: Event, entry: Entry) {
     if (entry.href == router.currentRoute.value.path) return;
     router.push(entry.href);
   }
-  showToast({ text: entry.name, position: 'top' });
+  // showToast({ text: entry.name, position: 'top' });
 }
 
 const refLoginModal = ref<CommonModalFunc>();
@@ -196,7 +202,7 @@ function handleSearch(keyword?: string) {
     <div class="header-placeholder" style="height: 3.5rem;"></div>
     <header ref="headerRef" :style="headerStyle">
       <ul class="left-entry">
-        <li style="display: flex;"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.5rem; object-fit: cover;" /></li>
+        <li style="display: flex;" @click="router.replace('/')"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.5rem; object-fit: cover;" /></li>
         <li v-for="entry in leftEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
           <CusPopover position="bottom">
             <template #body>
@@ -438,7 +444,7 @@ header {
   &-avatar {
     width: 1.75rem;
     height: 1.75rem;
-    border-radius: 50%;
+    border-radius: .5rem;
     transition: transform .2s $ease-out-circ;
 
     &:hover {
