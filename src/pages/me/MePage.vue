@@ -4,16 +4,37 @@ import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import CusButton from '@/components/button/CusButton.vue';
 import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
 import PostItemCard from '@/pages/post/components/PostItemCard.vue';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import CusInput from '@/components/input/CusInput.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+onMounted(() => {
+  if (router.currentRoute.value.path == '/me/edit') {
+    editing.value = true;
+  }
+});
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
 const posts = ref<PostItemCardProps[]>([]); // 所有的帖子
 // const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
 const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
+
+watch(() => editing.value, (newValue) => {
+  if (newValue) {
+    if (router.currentRoute.value.path != '/me/edit') {
+      router.push('/me/edit');
+    }
+    edit();
+  } else {
+    if (router.currentRoute.value.path == '/me/edit') {
+      router.push('/me');
+    }
+  }
+});
 let signature = ref(''); // 个性签名
 let signatureLen = ref(signature.value.length); // 个性签名长度
 const maleColor = ref('#F5F5F5FF'); // 性别颜色
@@ -528,6 +549,7 @@ function save() {
     }];
   let infoString = JSON.stringify(infoArray);
   localStorage.setItem('info', infoString);
+  window.location.reload();
   console.log('save');
   console.log(infoArray);
 }
@@ -550,8 +572,8 @@ function save() {
             <div id = "me-left-user-likes" class = "stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
           </div>
         </section>
-        <section v-if = "!editing" class = "me-left-edit" @click = "edit">
-          编辑资料
+        <section class = "me-left-edit" @click = "() => editing ? editing = false : edit()">
+          {{ editing ? '返回' : '编辑资料' }}
         </section>
       </aside>
       <main v-if = "!editing" id = "me-posts" class = "me-main">
