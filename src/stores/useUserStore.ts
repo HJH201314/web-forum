@@ -12,6 +12,13 @@ const useUserStore = defineStore('user', () => {
   const userInfo = computed(() => userInfoStorage.value);
   const isLogin = computed(() => !!userInfo.value.id);
 
+  const rememberUserStorage = useLocalStorage('remember-user', {
+    phone: '',
+    email: '',
+  });
+  const rememberUser = computed(() => rememberUserStorage.value);
+  const isRememberUser = computed(() => rememberUserStorage.value.phone || rememberUserStorage.value.email);
+
   onMounted(async () => {
     // 获取用户信息
     await getUserInfo();
@@ -91,6 +98,20 @@ const useUserStore = defineStore('user', () => {
     }
   };
 
+  function setRememberUser(remember: boolean, principal?: string, type?: 'phone' | 'email') {
+    rememberUserStorage.value = {
+      phone: '',
+      email: '',
+    };
+    if (remember) {
+      if (type === 'phone') {
+        rememberUserStorage.value.phone = principal ?? '';
+      } else if (type === 'email') {
+        rememberUserStorage.value.email = principal ?? '';
+      }
+    }
+  }
+
   return {
     token,
     avatar,
@@ -100,6 +121,9 @@ const useUserStore = defineStore('user', () => {
     logout,
     sendPin,
     register,
+    isRememberUser,
+    rememberUser,
+    setRememberUser,
   };
 });
 

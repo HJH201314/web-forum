@@ -94,7 +94,7 @@ export async function publishUsingPost(
   body: FormData,
   options?: { [key: string]: any },
 ) {
-  return request<API.CommonResultString_>('/updates/essay', {
+  return request<API.CommonResultInt_>('/updates/essay', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/multipart/form-data',
@@ -155,13 +155,18 @@ export async function getEssayByIdUsingGet(
 export async function getInPageUsingGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getInPageUsingGETParams,
+  body?: API.UpdateSearchDto,
   options?: { [key: string]: any },
 ) {
   return request<API.CommonResultListUpdate_>('/updates/inPage', {
     method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     params: {
       ...params,
     },
+    data: body,
     ...(options || {}),
   });
 }

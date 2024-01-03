@@ -1,16 +1,16 @@
 <script setup lang="ts">
 
-import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
-import DateFormat from "@/components/date-format/DateFormat.vue";
-import { MoreOne, ShareThree, CommentOne, ThumbsUp, DeleteOne } from "@icon-park/vue-next";
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
-import CommentView from "@/pages/post/components/CommentView.vue";
-import { convertPostImage } from "@/pages/post/utils/image";
-import adminApi from "@/apis/services/video-platform-admin";
-import showToast from "@/components/toast/toast";
-import useUserStore from "@/stores/useUserStore";
-import commentApi from "@/apis/services/video-platform-comment";
+import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
+import DateFormat from '@/components/date-format/DateFormat.vue';
+import { CommentOne, DeleteOne, MoreOne, ThumbsUp } from '@icon-park/vue-next';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
+import CommentView from '@/pages/post/components/CommentView.vue';
+import { convertPostImage, convertUserFile } from '@/pages/post/utils/image';
+import adminApi from '@/apis/services/video-platform-admin';
+import showToast from '@/components/toast/toast';
+import useUserStore from '@/stores/useUserStore';
+import commentApi from '@/apis/services/video-platform-comment';
 import PreviewManager from '@/components/image-preview/ImagePreview';
 import { DialogManager } from '@/components/dialog';
 import CusPopover from '@/components/popover/CusPopover.vue';
@@ -78,6 +78,43 @@ const postTypeDesc = computed(() => {
   }
 });
 
+/* 自动处理内容 */
+const contents = reactive({
+  text: ref(''),
+  title: ref(''),
+  videos: ref([] as string[]),
+  audios: ref([] as string[]),
+});
+watch(() => props.content, (val) => {
+  contents.title = '';
+  contents.text = val;
+  // [title:xxx]啊哈哈哈哈
+  const str = val;
+  const titleRegex = /^\[title:(.*?)]/; // 使用非贪婪模式匹配括号内的内容
+  let match = str.match(titleRegex);
+  console.log(match);
+  if (match) {
+    contents.title = match[1]; // 提取匹配的内容
+    contents.text = contents.text.replace(titleRegex, '');
+  }
+  // [video:xxx]
+  const videoRegex = /\[video:(.*?)]/g;
+  match = str.match(videoRegex);
+  console.log(match);
+  if (match) {
+    contents.videos = match.map(m => m.replace(videoRegex, '$1'));
+    contents.text = contents.text.replace(videoRegex, '');
+  }
+  // [audio:xxx]
+  const audioRegex = /\[audio:(.*?)]/g;
+  match = str.match(audioRegex);
+  if (match) {
+    contents.audios = match.map(m => m.replace(audioRegex, '$1'));
+    contents.text = contents.text.replace(audioRegex, '');
+  }
+
+}, { immediate: true });
+
 const refContent = ref();
 const needReadMore = ref(false);
 const readingMore = ref(false);
@@ -117,6 +154,9 @@ function handleDeletePost() {
         id: props.postId,
       }).then(res => {
         if (res.data.code == 200) {
+          if (props.singleUse) {
+            router.replace('/post');
+          }
           showToast({ text: '删除成功', type: 'success' });
         }
       }).catch();
@@ -191,11 +231,25 @@ const router = useRouter();
       </CusPopover>
     </div>
     <div class="post-list-item-body">
-      <div ref="refContent" class="dili-text-ellipsis" :class="{'content-less': !readingMore}" v-html="props.content"></div>
+      <div class="title cus-text-ellipsis" v-html="contents.title"></div>
+      <div ref="refContent" class="content-normal" :class="{'cus-text-ellipsis': !props.singleUse, 'content-less': !readingMore, 'content-normal': readingMore}" v-html="contents.text"></div>
       <div v-if="needReadMore" class="unfold" @click="handleUnfold">{{ readingMore ? '收起' : '展开' }}</div>
+      <!-- 图片展示 -->
       <div class="image-grid">
         <div class="image-item" :class="{'unlimited': largeImage == image}" v-for="image in props.images" :key="image" @click="handlePreviewImage(image)">
           <img :src="convertPostImage(image)" alt="image">
+        </div>
+      </div>
+      <!-- 视频展示 -->
+      <div class="video-grid">
+        <div class="video-item" :class="{'unlimited': largeImage == video}" v-for="video in contents.videos" :key="video">
+          <video controls :src="convertUserFile(video)" />
+        </div>
+      </div>
+      <!-- 音频展示 -->
+      <div class="audio-grid">
+        <div class="audio-item" :class="{'unlimited': largeImage == audio}" v-for="audio in contents.audios" :key="audio">
+          <audio controls :src="convertUserFile(audio)" />
         </div>
       </div>
     </div>
@@ -212,6 +266,7 @@ const router = useRouter();
 
 <style scoped lang="scss">
 @import "@/assets/main";
+@import "@/assets/preset";
 .post-list-item {
   position: relative;
   &-avatar {
@@ -268,14 +323,26 @@ const router = useRouter();
   }
 
   &-body {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
     margin-left: 4rem;
 
+    > .title {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
     > .content-less {
+      word-break: break-all;
+      white-space: pre-line;
       -webkit-line-clamp: 6;
       // max-height: 6rem;
       // overflow: hidden;
     }
     > .content-normal {
+      word-break: break-all;
+      white-space: pre-line;
       -webkit-line-clamp: none;
     }
 
@@ -295,10 +362,31 @@ const router = useRouter();
         height: 5rem;
         box-sizing: border-box;
         &.unlimited {
-          width: 100%;
+          width: unset;
+          max-width: 512px;
           height: auto;
         }
         & img {
+          width: 100%;
+          height: 100%;
+          border-radius: .25rem;
+          object-fit: cover;
+        }
+      }
+    }
+
+    > .video-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+
+      .video-item {
+        max-width: 480px;
+        &.unlimited {
+          width: 100%;
+          height: auto;
+        }
+        & video {
           width: 100%;
           height: 100%;
           border-radius: .25rem;

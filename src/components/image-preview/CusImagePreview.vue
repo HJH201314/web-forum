@@ -5,7 +5,9 @@ import PreviewManager, { type ImagePreviewProps } from '@/components/image-previ
 import Spinning from '@/components/spinning/Spinning.vue';
 
 const props = withDefaults(defineProps<ImagePreviewProps>(), {
+  _id: '',
   modelValue: '',
+  type: 'image',
 });
 
 const emit = defineEmits<{
@@ -79,7 +81,7 @@ function handleImgLoaded() {
     color: $color-white;
     background-color: #0000003F;
     font-size: 1rem;
-    z-index: 1;
+    z-index: 2;
     transition: opacity .2s $ease-in-out-circ;
 
     &:hover {

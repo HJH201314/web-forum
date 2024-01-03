@@ -8,3 +8,12 @@ export function convertPostImage(path?: string) {
   if (!path) return "";
   return `${SERVER_API_URL}${ADMIN_SERVICE_PATH}/updates/getImage?url=${path}`;
 }
+
+/**
+ * Convert user file uuid to url
+ * @param uuid
+ */
+export function convertUserFile(uuid?: string) {
+  if (!uuid) return "";
+  return `${SERVER_API_URL}/minio/video-platform.user/${uuid}`;
+}

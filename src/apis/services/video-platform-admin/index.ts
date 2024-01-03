@@ -6,7 +6,7 @@ import * as historyController from './historyController';
 import * as tuijianmokuai from './tuijianmokuai';
 import * as loginController from './loginController';
 import * as updatesController from './updatesController';
-import * as updatesControllerFix from './updatesController';
+import * as updatesControllerFix from './updatesControllerFix';
 import * as userInfoController from './userInfoController';
 import * as videoController from './videoController';
 export default {

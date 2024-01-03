@@ -10,6 +10,7 @@ type ImagePreviewInstance = {
 export type ImagePreviewProps = {
   _id: string;
   modelValue: string;
+  type: 'image' | 'video' | 'audio';
 }
 
 class PreviewManager {

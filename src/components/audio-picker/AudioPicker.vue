@@ -1,29 +1,29 @@
 <script setup lang="ts">
 
 import { computed, nextTick, reactive, ref, watch } from 'vue';
-import type { ImagePickerFunc, ImagePickerModel, ImagePickerModelItem } from "@/components/image-picker/ImagePicker";
+import type { AudioPickerFunc, AudioPickerModel, AudioPickerModelItem } from "@/components/audio-picker/AudioPicker";
 import { CloseOne, Plus } from "@icon-park/vue-next";
 
-type ImagePickerProps = {
-  modelValue?: ImagePickerModel; // v-model返回文件对象
+type AudioPickerProps = {
+  modelValue?: AudioPickerModel; // v-model返回文件对象
   limit?: number;
   showSelectOnEmpty?: boolean; // 是否在没有图片时显示选择按钮
   showSelectNotEmpty?: boolean; // 是否在有图片时显示选择按钮
 };
-const props = withDefaults(defineProps<ImagePickerProps>(), {
+const props = withDefaults(defineProps<AudioPickerProps>(), {
   limit: 9,
   showSelectOnEmpty: true,
   showSelectNotEmpty: true,
 });
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', value: ImagePickerModel): void; // 选择或移除图片后
+  (event: 'update:modelValue', value: AudioPickerModel): void; // 选择或移除图片后
   (event: 'change', value: File[]): void; // 选择或移除图片后
   (event: 'limited'): void; // 超过数量限制
 }>();
 
-defineExpose<ImagePickerFunc>({
-  selectImage,
+defineExpose<AudioPickerFunc>({
+  selectAudio,
 });
 
 const inputRef = ref<HTMLInputElement>();
@@ -34,14 +34,14 @@ const displaySelect = computed(() => {
 const form = reactive({
   files: [] as File[],
   paths: [] as string[],
-  previewingImage: ref<number>(-1),
+  previewingAudio: ref<number>(-1),
 });
 
 /**
  * @export
  * 调起文件选择
  * */
-function selectImage() {
+function selectAudio() {
   if (form.files.length >= props.limit) {
     emit('limited');
     return;
@@ -51,8 +51,7 @@ function selectImage() {
 }
 
 /* 处理图片移除 */
-function handleImageRemove(path: string) {
-  const index = form.paths.indexOf(path);
+function handleAudioRemove(index: number) {
   form.files.splice(index, 1);
   form.paths.splice(index, 1);
   nextTick(() => {
@@ -61,22 +60,25 @@ function handleImageRemove(path: string) {
 }
 
 /* 处理图片点击 */
-function handleImageClick(index: number) {
+function handleAudioClick(e: any, index: number) {
   // 预览图片
-  form.previewingImage = index;
+  form.previewingAudio = index;
 }
 
 /* 处理文件选择事件 */
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
+  console.log(1);
   if (!target.files) {
     return;
   }
+  console.log(2);
   const files = Array.from(target.files);
   if (form.files.length + files.length > props.limit) {
     emit('limited');
     return;
   }
+  console.log(3);
   form.files = [...form.files, ...files];
   form.paths = [...form.paths, ...files.map(file => URL.createObjectURL(file))];
   nextTick(() => {
@@ -114,7 +116,7 @@ function handleDragEnter(e: DragEvent, index: number) {
 
 /* 接收modelValue更新 */
 watch(() => props.modelValue, (value) => {
-  if (!value) {
+  if (value == undefined) {
     return;
   }
   form.files = value.map(item => item.file);
@@ -128,13 +130,13 @@ function notify() {
     return {
       file,
       path: form.paths[index],
-    } as ImagePickerModelItem;
+    } as AudioPickerModelItem;
   }));
   console.log(form.files.map((file, index) => {
     return {
       file,
       path: form.paths[index],
-    } as ImagePickerModelItem;
+    } as AudioPickerModelItem;
   }));
   emit('change', form.files);
   console.log(form.files);
@@ -142,25 +144,30 @@ function notify() {
 </script>
 
 <template>
-  <div class="image-picker">
-    <input ref="inputRef" type="file" multiple accept="image/*" @change="handleFileChange" />
+  <div class="audio-picker">
+    <input ref="inputRef" type="file" multiple accept="audio/*" @change="handleFileChange" />
     <teleport to="body">
-      <div v-if="form.previewingImage != -1" class="image-picker__previewer" @click="form.previewingImage = -1">
-        <transition name="image-scale" appear><img v-if="form.previewingImage != -1" class="image-picker__previewer--img" :src="form.paths[form.previewingImage]" alt="picker-preview" draggable="false" /></transition>
-        <div class="image-picker__previewer--mask"></div>
+      <div v-if="form.previewingAudio != -1" class="audio-picker__previewer" @click="form.previewingAudio = -1">
+        <transition name="audio-scale" appear>
+          <audio controls v-if="form.previewingAudio != -1" class="audio-picker__previewer--img" :src="form.paths[form.previewingAudio]" draggable="false" />
+        </transition>
+        <div class="audio-picker__previewer--mask"></div>
       </div>
     </teleport>
-    <div class="image-picker__preview" @dragover.prevent>
+    <div class="audio-picker__preview" @dragover.prevent>
       <transition-group name="list">
-        <div class="image-picker__preview__item" v-for="(path, i) in form.paths" :key="path"
-             draggable="true" @dragover.prevent @contextmenu.prevent="handleImageRemove(path)"
+        <div class="audio-picker__preview__item" v-for="(file, i) in form.files" :key="i"
+             draggable="true" @dragover.prevent @click="(e) => handleAudioClick(e, i)"
+             @contextmenu.prevent="handleAudioRemove(i)"
              @dragstart="(e) => handleDragStart(e, i)" @dragenter="(e) => handleDragEnter(e, i)">
-          <img :src="path" alt="picker-preview" draggable="false" @click="handleImageClick(i)" />
-          <CloseOne class="image-picker__preview__item__del" size="1.5rem" theme="filled" @click="handleImageRemove(path)" />
+<!--          <img :src="path" alt="picker-preview" draggable="false" @click="handleImageClick(i)" />-->
+          <span>【音频】{{ file.name }}</span>
+          <CloseOne class="audio-picker__preview__item__del" size="1.5rem" theme="filled" @click.stop="handleAudioRemove(i)" />
         </div>
       </transition-group>
-      <div v-if="displaySelect" class="image-picker__preview__select" @click="selectImage">
-        <Plus class="image-picker__preview__select__plus" size="2.5rem" theme="outline" />
+      <div v-if="displaySelect" class="audio-picker__preview__select">
+        <Plus class="audio-picker__preview__select__plus" size="1rem" theme="outline" @click="selectAudio" />
+        添加音频
       </div>
     </div>
   </div>
@@ -168,7 +175,7 @@ function notify() {
 
 <style scoped lang="scss">
 @import "@/assets/variables.module";
-.image-picker {
+.audio-picker {
   input {
     display: none;
   }
@@ -203,16 +210,20 @@ function notify() {
   &__preview {
     display: flex;
     flex-wrap: wrap;
-    gap: .5rem;
+    gap: .25rem;
 
     &__item {
       position: relative;
-      width: 5rem;
-      height: 5rem;
+      width: 100%;
       cursor: pointer;
+      padding: .5rem .75rem;
+      border-radius: .5rem;
 
       &:hover {
-        .image-picker__preview__item__del {
+        @extend %hover-able;
+        @extend %click-able;
+
+        .audio-picker__preview__item__del {
           scale: 1;
         }
       }
@@ -227,8 +238,9 @@ function notify() {
       &__del {
         scale: 0;
         position: absolute;
-        top: 0;
-        right: 0;
+        top: 50%;
+        left: 0;
+        transform: translate(-50%, -50%);
         width: 1.5rem;
         height: 1.5rem;
         cursor: pointer;
@@ -238,18 +250,19 @@ function notify() {
     }
     &__select {
       position: relative;
-      width: 5rem;
-      height: 5rem;
+      width: 100%;
       border-radius: .5rem;
       border: 1px dashed $color-black-lighter;
       cursor: pointer;
+      padding: .5rem .75rem;
+
+      &:hover {
+        @extend %hover-able;
+        @extend %click-able;
+      }
 
       &__plus {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: darken($color-grey-500, 10%);
+        //color: darken($color-grey-500, 10%);
       }
     }
   }
@@ -257,16 +270,16 @@ function notify() {
 </style>
 <style lang="scss">
 @import "@/assets/animations.scss";
-.image-scale-enter-active,
-.image-scale-leave-active {
+.audio-scale-enter-active,
+.audio-scale-leave-active {
   transition: scale .3s $ease-in-out-circ;
 }
-.image-scale-enter-from,
-.image-scale-leave-to {
+.audio-scale-enter-from,
+.audio-scale-leave-to {
   scale: 0;
 }
-.image-scale-enter-to,
-.image-scale-leave-from {
+.audio-scale-enter-to,
+.audio-scale-leave-from {
   scale: 1;
 }
 </style>

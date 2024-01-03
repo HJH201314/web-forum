@@ -13,6 +13,7 @@ const props = withDefaults(defineProps<ToggleProps>(), {
 
 const emit = defineEmits<{
   (event: 'update:modelValue', active: boolean): void;
+  (event: 'toggle', active: boolean): void;
 }>();
 
 const active = ref(props.modelValue);
@@ -24,6 +25,7 @@ watch(() => props.modelValue, (newVal) => {
 function toggle() {
   active.value = !active.value;
   emit('update:modelValue', active.value);
+  emit('toggle', active.value);
 }
 
 </script>

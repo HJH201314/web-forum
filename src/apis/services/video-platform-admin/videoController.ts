@@ -68,7 +68,7 @@ export async function getVideoSourceUsingGet(options?: { [key: string]: any }) {
   });
 }
 
-/** 获取视频预览信息，传入路径参数id GET /video/info/${param0} */
+/** 获取视频所有信息组合，传入路径参数id GET /video/info/${param0} */
 export async function getVideoInfoUsingGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getVideoInfoUsingGETParams,

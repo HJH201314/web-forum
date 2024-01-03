@@ -11,13 +11,27 @@ export async function publishUsingPost(
     body: FormData,
     options?: { [key: string]: any },
 ) {
-  return request<API.CommonResultString_>('/updates/essay', {
+  return request<API.CommonResultInt_>('/updates/essay', {
     method: 'POST',
     headers: {
       'Content-Type': 'multipart/form-data',
     },
     params: {
       ...params,
+    },
+    data: body,
+    ...(options),
+  });
+}
+
+export async function uploadFileUsingPost(
+    body: FormData,
+    options?: { [key: string]: any },
+) {
+  return request<API.CommonResultString_>('/user-info/uploadUserFile', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'multipart/form-data',
     },
     data: body,
     ...(options),

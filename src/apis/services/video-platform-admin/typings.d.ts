@@ -40,6 +40,12 @@ declare namespace API {
     message?: string;
   };
 
+  type CommonResultBoolean_ = {
+    code?: number;
+    data?: boolean;
+    message?: string;
+  };
+
   type CommonResultInt_ = {
     code?: number;
     data?: number;
@@ -478,11 +484,27 @@ declare namespace API {
     vid?: number;
   };
 
+  type UpdateHeat = {
+    /** 评论数量 */
+    commentNum?: number;
+    /** 点赞数量 */
+    likeNum?: number;
+    /** 收藏数量 */
+    shareNum?: number;
+    /** 动态id */
+    updateId?: number;
+  };
+
   type updatePartitionUsingPUTParams = {
     /** id */
     id: number;
     /** name */
     name: string;
+  };
+
+  type UpdateSearchDto = {
+    str?: string;
+    uid?: number;
   };
 
   type updateUsingPUTParams = {
@@ -593,6 +615,7 @@ declare namespace API {
 
   type VideoInfoVo = {
     update?: Update;
+    updateHeat?: UpdateHeat;
     user?: User;
     video?: Video;
   };
