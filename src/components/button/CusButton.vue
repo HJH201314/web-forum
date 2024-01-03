@@ -25,9 +25,10 @@ const buttonStyle = computed(() => {
 });
 
 const backgroundColor = computed(() => {
+  if (props.backgroundColor) return props.backgroundColor;
   switch (props.type) {
     case 'primary':
-      return props.backgroundColor || variables.colorPrimary;
+      return variables.colorPrimary;
     case 'success':
       return variables.colorSuccess;
     case 'warning':
@@ -36,7 +37,6 @@ const backgroundColor = computed(() => {
       return variables.colorDanger;
     default:
       return '#FFFFFF';
-
   }
 });
 const hoverBackgroundColor = computed(() => {

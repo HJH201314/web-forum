@@ -49,10 +49,11 @@ function handleImgLoaded() {
 <template>
   <teleport to="body" v-if="previewing">
     <div class="image-previewer" @click="handleClose">
-      <spinning class="image-previewer--loading" v-if="!loaded" size="5rem" />
-      <div ref="originDivRef" style="display: none;"><img ref="imgRef" v-if="previewing" class="image-previewer--img" :src="props.modelValue" alt="picker-preview" draggable="false" @load="handleImgLoaded" /></div>
-      <div ref="containerRef" v-if="loaded" class="image-previewer--container"></div>
-      <div class="image-previewer--mask"></div>
+      <div class="image-previewer__tip">点击任意位置关闭</div>
+      <spinning class="image-previewer__loading" v-if="!loaded" size="5rem" />
+      <div ref="originDivRef" style="display: none;"><img ref="imgRef" v-if="previewing" class="image-previewer__img" :src="props.modelValue" alt="picker-preview" draggable="false" @load="handleImgLoaded" /></div>
+      <div ref="containerRef" v-if="loaded" class="image-previewer__container"></div>
+      <div class="image-previewer__mask"></div>
     </div>
   </teleport>
 </template>
@@ -69,11 +70,28 @@ function handleImgLoaded() {
   padding: 1rem;
   cursor: pointer;
 
-  &--loading {
+  &__tip {
+    position: absolute;
+    top: 1rem;
+    margin: 0 auto;
+    border-radius: .5rem;
+    padding: .5rem 1rem;
+    color: $color-white;
+    background-color: #0000003F;
+    font-size: 1rem;
+    z-index: 1;
+    transition: opacity .2s $ease-in-out-circ;
+
+    &:hover {
+      opacity: 0;
+    }
+  }
+
+  &__loading {
     z-index: 1;
   }
 
-  &--container {
+  &__container {
     position: relative;
     width: 100%;
     height: 100%;
@@ -82,7 +100,7 @@ function handleImgLoaded() {
     align-items: center;
   }
 
-  &--img {
+  &__img {
     border-radius: .5rem;
     overflow: hidden;
     box-sizing: border-box;
@@ -101,7 +119,7 @@ function handleImgLoaded() {
       }
     }
   }
-  &--mask {
+  &__mask {
     position: absolute;
     inset: 0;
     z-index: 0;

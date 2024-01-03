@@ -81,6 +81,12 @@ async function handleChangePassword() {
     title: '修改密码',
     content: '请输入新密码',
   }, {
+    validation: (v) => {
+      if (v.length < 6) {
+        return '密码长度不能小于6位';
+      }
+      return '';
+    },
     inputAttrs: {
       type: 'password',
     },
@@ -111,7 +117,6 @@ function handleMeClick() {
 
 /* searchStatus - 搜索状态 : none-没有在搜索  searching-搜索框展开  mouseout-鼠标移出搜索面板但未关闭 */
 const searchStatus = ref<'none' | 'searching' | 'mouseout'>('none');
-const searchContainer = ref<HTMLDivElement>();
 const searchInputRef = ref<HTMLInputElement>();
 
 /**
@@ -217,34 +222,32 @@ const globe = useGlobal();
           </CusPopover>
         </li>
       </ul>
-      <div class="center-search-container" ref="searchContainer">
-        <div class="center-search-bar" :class="{ 'center-search-bar-focus': searchStatus != 'none' }"
-             @mouseleave="() => searchStatus = (searchStatus != 'none') ? 'mouseout' : 'none'"
-             @mouseenter="() => searchStatus = (searchStatus == 'mouseout') ? 'searching' : searchStatus"
-             :style="props.searchBarStyle"
-        >
-          <form :class="{ 'focus': searchStatus != 'none' }" @submit.prevent>
-            <input ref="searchInputRef" v-model="form.searchVal" type="text" id="nav-search-input" placeholder="搜索"
-                   @focus="searchStatus = 'searching'"
-                   @blur="handleSearchInputBlur"
-            />
-            <Search class="search" size="1.25rem" @click="handleSearch" />
-          </form>
-          <Transition name="opacity-circ">
-            <div v-show="searchStatus !== 'none'" class="center-search-panel">
-              <div v-show="hisIsShow" class="hisBoard">
-                <div class="header">
-                  <div class="title">搜索历史</div>
-                  <div class="clear">清空</div>
-                </div>
-                <div class="histories">
-                  <div @click="searchFromHistory(history)" class="hisDiv" v-for="(history, index) in historyList" :key="index">{{ history }}</div>
-                </div>
+      <div class="center-search-bar" :class="{ 'center-search-bar-focus': searchStatus != 'none' }"
+           @mouseleave="() => searchStatus = (searchStatus != 'none') ? 'mouseout' : 'none'"
+           @mouseenter="() => searchStatus = (searchStatus == 'mouseout') ? 'searching' : searchStatus"
+           :style="props.searchBarStyle"
+      >
+        <form :class="{ 'focus': searchStatus != 'none' }" @submit.prevent>
+          <input ref="searchInputRef" v-model="form.searchVal" type="text" id="nav-search-input" placeholder="搜索"
+                 @focus="searchStatus = 'searching'"
+                 @blur="handleSearchInputBlur"
+          />
+          <Search class="search" size="1.25rem" @click="handleSearch" />
+        </form>
+        <Transition name="opacity-circ">
+          <div v-show="searchStatus !== 'none'" class="center-search-panel">
+            <div v-show="hisIsShow" class="hisBoard">
+              <div class="header">
+                <div class="title">搜索历史</div>
+                <div class="clear">清空</div>
               </div>
-              <div style="height: 1rem" v-show="!suggestList.length"><!-- 占位，让没有搜索结果时的搜索面板圆润起来 --></div>
+              <div class="histories">
+                <div @click="searchFromHistory(history)" class="hisDiv" v-for="(history, index) in historyList" :key="index">{{ history }}</div>
+              </div>
             </div>
-          </Transition>
-        </div>
+            <div style="height: 1rem" v-show="!suggestList.length"><!-- 占位，让没有搜索结果时的搜索面板圆润起来 --></div>
+          </div>
+        </Transition>
       </div>
       <ul class="right-entry">
         <li v-for="entry in rightEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
@@ -300,7 +303,6 @@ header {
   //backdrop-filter: blur(3px);
   height: 3.5rem;
   max-width: 100%;
-  overflow: hidden;
   padding: 0 1rem;
   display: flex;
   align-items: center;
@@ -355,19 +357,16 @@ header {
 
 }
 
-.left-entry {}
+.left-entry {
+  overflow: auto;
+}
 
 .center-search {
   flex: 1;
 
-  &-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-
   &-bar {
     flex: 1;
+    margin: 0 auto; // 居中
     height: 2.5rem;
     min-width: 180px;
     max-width: 500px;

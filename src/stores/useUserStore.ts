@@ -46,9 +46,9 @@ const useUserStore = defineStore('user', () => {
         avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res2.data.data?.id}`;
         console.log('user_info', userInfoStorage.value);
       });
-      return true;
+      return res?.data;
     } else {
-      return false;
+      return {};
     }
   };
 
@@ -67,7 +67,7 @@ const useUserStore = defineStore('user', () => {
       type: type === 'phone' ? 1 : 2,
     };
     const res = await securityApi.loginController.registerUsingPost(param);
-    return res?.data.code === 200;
+    return res?.data;
   };
 
   const logout = async () => {

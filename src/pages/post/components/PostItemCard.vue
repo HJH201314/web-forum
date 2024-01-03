@@ -14,6 +14,8 @@ import commentApi from "@/apis/services/video-platform-comment";
 import PreviewManager from '@/components/image-preview/ImagePreview';
 import { DialogManager } from '@/components/dialog';
 import CusPopover from '@/components/popover/CusPopover.vue';
+import CusButton from '@/components/button/CusButton.vue';
+import { useRouter } from 'vue-router';
 
 const props = withDefaults(defineProps<PostItemCardProps>(), {
   type: 'post',
@@ -29,6 +31,7 @@ const props = withDefaults(defineProps<PostItemCardProps>(), {
   content: '-',
   images: () => [],
 
+  singleUse: false,
   showAction: true,
   defaultTab: undefined,
 });
@@ -106,7 +109,7 @@ function handleDeletePost() {
     content: '确定要删除这条动态吗？',
     confirmButtonProps: {
       text: '删除',
-      backgroundColor: 'danger',
+      type: 'danger',
     },
     onConfirm: () => {
       // 执行：删除动态
@@ -161,6 +164,7 @@ function handlePreviewImage(image: string) {
   PreviewManager.image(convertPostImage(image));
 }
 
+const router = useRouter();
 </script>
 
 <template>
@@ -170,10 +174,12 @@ function handlePreviewImage(image: string) {
     </div>
     <div class="post-list-item-header">
       <div class="username">{{ props.userName }}</div>
-      <div class="desc"><DateFormat :date="props.createTime" /> · {{ postTypeDesc }}</div>
-      <CusPopover>
+      <div class="desc"><DateFormat :date="props.createTime" /> · {{ postTypeDesc }}<span v-if="!props.singleUse"> ·
+        <a href="javascript:void(0)" @click="router.push(`/post/${props.postId}`)">详情>></a>
+      </span></div>
+      <CusPopover class="more" position="left">
         <template #body>
-          <div class="more" v-if="userStore.isLogin"><MoreOne theme="outline" size="1.25rem" /></div>
+          <CusButton v-if="userStore.isLogin && userStore.userInfo.id == props.userId"><MoreOne theme="outline" size="1.25rem" /></CusButton>
         </template>
         <template #popover>
           <div class="more-actions">
@@ -234,38 +240,29 @@ function handlePreviewImage(image: string) {
       color: $color-grey-500;
     }
 
-    .more-actions {
-      height: 1.75rem;
+    .more {
       position: absolute;
       top: .5rem;
-      right: 2.5rem;
-      border-radius: .5rem;
-      align-items: center;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-      display: flex;
+      right: .5rem;
 
-      .delete {
-        height: 100%;
-        aspect-ratio: 1;
-        span {
-          @extend %click-able;
-          @extend %button-like;
-          color: #ff7875;
-          padding: .25rem;
-          vertical-align: center;
+      .more-actions {
+        height: 1.75rem;
+        border-radius: .5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+
+        .delete {
+          height: 100%;
+          aspect-ratio: 1;
+          span {
+            @extend %click-able;
+            @extend %button-like;
+            color: #ff7875;
+            padding: .25rem;
+            vertical-align: center;
+          }
         }
-      }
-    }
-
-    .more {
-      span {
-        @extend %click-able;
-        @extend %button-like;
-        position: absolute;
-        top: .5rem;
-        right: .5rem;
-        padding: .25rem;
-        vertical-align: center;
       }
     }
   }

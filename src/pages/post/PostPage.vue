@@ -85,18 +85,17 @@ async function getPosts() {
 const uploading = ref(false);
 
 async function handlePublishPost() {
+  if (!userStore.isLogin || !userStore.userInfo?.id) {
+    // 未登录则提醒登录
+    showToast({ type: 'danger', text: '请先登录' });
+    return;
+  }
   if (!publishForm.content) {
     showToast({ type: 'danger', text: '请输入内容' });
     return;
   }
   uploading.value = true;
   try {
-    if (!userStore.isLogin || !userStore.userInfo?.id) {
-      // 未登录则跳转到登录页
-      showToast({ type: 'danger', text: '请先登录' });
-      await router.replace({name: 'home'});
-      return;
-    }
     await delay(1000);
     // 创建 FormData 对象
     const formData = new FormData();
@@ -109,8 +108,9 @@ async function handlePublishPost() {
     if (res.data?.code == 200) {
       showToast({ type: 'success', text: '发布成功' });
       clearInput();
-      currentPage.value = 1;
-      await getPosts();
+      currentPage.value = 0; // 重置页码
+      posts.value = [];
+      hasNoMore.value = false;
     } else {
       showToast({ type: 'danger', text: `发布失败：${res.data?.message}` });
     }

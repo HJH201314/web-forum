@@ -28,7 +28,7 @@ export const getUserInfo = async (uid: number): Promise<API.UserInfo> => new Pro
 
 /**
  * 响应式获取用户公开信息
- * @param uid 用户UID
+ * @param uid 用户UID（如果UID初始为空，请传入getter）
  * @param callback 请求成功回调函数
  */
 export default function useUserInfo(uid: MaybeRefOrGetter<number | undefined>, callback?: (userInfo: API.UserInfo) => void) {

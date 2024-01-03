@@ -9,6 +9,7 @@ import showToast from "@/components/toast/toast";
 import Spinning from "@/components/spinning/Spinning.vue";
 import { delay } from "@/utils/delay";
 import useGlobal from '@/commands/useGlobal';
+import CusInput from '@/components/input/CusInput.vue';
 
 const props = withDefaults(defineProps<{
   showByDefault?: boolean;
@@ -73,14 +74,14 @@ const emoji = ref('🚀');
 function init() {
   emoji.value = '🚀';
   // @ts-ignore
-  typer.value = new EasyTyper(typerObj, ['XForum']);
+  typer.value = new EasyTyper(typerObj, ['产品论坛', '立即登录']);
 }
 
 function handleChangeMode() {
   loginForm.mode = (loginForm.mode == 'login' ? 'register' : 'login');
   if (loginForm.mode == 'login') {
     // @ts-ignore
-    typer.value = new EasyTyper(typerObj, 'XForum');
+    typer.value = new EasyTyper(typerObj, ['产品论坛', '立即登录']);
   } else {
     // @ts-ignore
     typer.value = new EasyTyper(typerObj, '立即注册');
@@ -173,17 +174,17 @@ async function handleLoginSubmit() {
     }
     if (loginForm.mode == 'login') {
       const result = await userStore.login(loginForm.type, principal, credential);
-      if (!result) {
-        throw new Error();
+      if (!result?.data) {
+        showToast({ text: `登录失败，${result?.message}`, position: 'bottom', type: 'danger' });
       }
     } else if (loginForm.mode == 'register') {
       const result = await userStore.register(loginForm.type, principal, credential);
-      if (result) {
+      if (result?.data) {
         showToast({ text: '注册成功', position: 'bottom', type: 'success' });
-        loginForm.mode = 'login';
+        handleChangeMode();
         setGetPinAvailable();
       } else {
-        throw new Error();
+        showToast({ text: `注册失败，${result?.message}`, position: 'bottom', type: 'danger' });
       }
     }
     await delay(1000);
@@ -220,35 +221,48 @@ const globe = useGlobal();
     <template #default>
       <div class="login">
         <Close class="login-close" size="20" @click="() => refLoginModal?.close()" />
-        <div style="margin-top: .5rem;">
-          <span class="sidebar-logo sidebar-logo-animation">X Forum</span>
-          <span class="login-type">
-            <span class="login-type-item" :class="{'active': loginForm.type === 'phone'}" @click="loginForm.type = 'phone'">
+        <div style="margin-top: .5rem; display: flex;">
+<!--          <span class="sidebar-logo sidebar-logo-animation">X Forum</span>-->
+          <div class="login-type">
+            <div class="login-type-item" :class="{'active': loginForm.type === 'phone'}" @click="loginForm.type = 'phone'">
               <Phone />
-              <span v-if="globe.isLargeScreen">手机号{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
-            </span>
+              <span>手机号{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
+            </div>
             <span>&nbsp;|&nbsp;</span>
-            <span class="login-type-item" :class="{'active': loginForm.type === 'email'}" @click="loginForm.type = 'email'">
+            <div class="login-type-item" :class="{'active': loginForm.type === 'email'}" @click="loginForm.type = 'email'">
               <Mail />
-              <span v-if="globe.isLargeScreen">邮箱{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
-            </span>
-          </span>
+              <span>邮箱{{ loginForm.mode == 'register' ? '注册' : '登录' }}</span>
+            </div>
+          </div>
         </div>
         <div class="login-top">
-          <span class="login-top-emoji transition-all-circ">{{ emoji }}</span>
+<!--          <span class="login-top-emoji transition-all-circ">{{ emoji }}</span>-->
+          <div class="login-top-logo transition-all-circ"><img src="/x-logo-reverse.png" alt="logo" /></div>
           <span class="login-top-text">{{ typerObj.output }}</span>
           <span class="typed-cursor login-top-text">|</span>
         </div>
         <form class="login-bottom" @submit.prevent>
           <div class="login-form">
-            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="text" name="username" :placeholder="'请输入手机号'" v-model="loginForm.phone" autocomplete="username" />
-            <input v-if="loginForm.type === 'email'" class="login-form-input" type="text" name="email" placeholder="请输入邮箱" v-model="loginForm.email" autocomplete="none" />
-            <input v-if="loginForm.type === 'phone'" class="login-form-input" type="password" name="password" placeholder="请输入密码" v-model="loginForm.password" autocomplete="current-password" />
-            <input v-if="loginForm.type === 'phone' && loginForm.mode == 'register'" class="login-form-input" type="password" name="retype" placeholder="请再次输入密码" v-model="loginForm.retypePwd" autocomplete="new-password" />
-            <div v-if="loginForm.type === 'email'" style="position: relative;">
-              <input class="login-form-input" type="text" name="sms" placeholder="请输入验证码" v-model="loginForm.pin" />
-              <div class="login-form-get-sms" @click="handleGetSmsCode"><Spinning style="margin-right: .5rem;" :show="smsLoading" color="#9e9e9e" />{{ smsTip }}</div>
-            </div>
+            <CusInput v-if="loginForm.type === 'phone'" class="login-form-item" placeholder="请输入手机号" v-model="loginForm.phone"
+                      :validations="[{name: 'pattern', value: /^1\d{10}$/, msg: '请输入正确的手机号'}]"
+                      :input-attrs="{type: 'tel', autocomplete: 'username'}" />
+            <CusInput v-if="loginForm.type === 'email'" class="login-form-item" placeholder="请输入邮箱" v-model="loginForm.email"
+                      :validations="[{name: 'pattern', value: /^.+@.+\..+$/, msg: '请输入正确的邮箱'}]"
+                      :input-attrs="{type: 'email', autocomplete: 'username'}" />
+            <!-- TODO: 细化密码提示 -->
+            <CusInput v-if="loginForm.type === 'phone'" class="login-form-item" placeholder="请输入密码" v-model="loginForm.password"
+                      :validations="[{name: 'pattern', value: /^.{6,30}$/, msg: '请输入正确的密码'}]"
+                      :input-attrs="{type: 'password', autocomplete: 'current-password'}" />
+            <CusInput v-if="loginForm.type === 'phone' && loginForm.mode == 'register'" class="login-form-item" placeholder="请再次输入密码" v-model="loginForm.retypePwd"
+                      :validation="() => loginForm.retypePwd == loginForm.password ? '' : '两次输入密码不一致'"
+                      :input-attrs="{type: 'password', autocomplete: 'new-password'}" />
+            <CusInput v-if="loginForm.type === 'email'" class="login-form-item" placeholder="请输入验证码" v-model="loginForm.pin"
+                      :validations="[{name: 'pattern', value: /^\d{6}$/, msg: '请输入正确的验证码'}]"
+                      :input-attrs="{type: 'text', autocomplete: 'off'}">
+              <template #append>
+                <div class="login-form-get-sms" @click="handleGetSmsCode"><Spinning style="margin-right: .5rem;" :show="smsLoading" color="#9e9e9e" />{{ smsTip }}</div>
+              </template>
+            </CusInput>
           </div>
           <div class="login-form-submit" v-shake="loginForm.shake" @click="handleLoginSubmit">
             <button style="outline: none; color: inherit;" :disabled="submitLoading" @submit.prevent="handleLoginSubmit">
@@ -289,13 +303,18 @@ const globe = useGlobal();
     color: #5c5c5c;
     margin-left: .5rem;
     vertical-align: center;
+    display: flex;
+    align-items: center;
     &-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
       transition: all .2s $ease-out-circ;
+      padding: .35rem .5rem;
+      border-radius: .5rem;
       &:not(.active) {
         @extend %click-able;
       }
-      padding: .35rem .5rem;
-      border-radius: .5rem;
       &.active {
         color: $color-primary;
       }
@@ -320,6 +339,26 @@ const globe = useGlobal();
     &-emoji {
       &:focus {
         transform: scale(0.9);
+      }
+    }
+    &-logo {
+      margin: 0 auto;
+      width: 5rem;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: invert(43%) sepia(13%) saturate(2294%) hue-rotate(193deg) brightness(84%) contrast(88%); // 用于将图片变成紫色
+        animation: spinning 3s infinite linear;
+      }
+      @keyframes spinning {
+        0% {
+          transform: rotate3d(0,0,0, 0deg);
+        }
+        100% {
+          transform: rotate3d(1,2,1, 360deg);
+        }
       }
     }
     &-text {
@@ -364,6 +403,10 @@ const globe = useGlobal();
     display: flex;
     flex-direction: column;
     gap: .5rem;
+    &-item {
+      width: 100%;
+      font-size: 1.1rem;
+    }
     &-input {
       width: 100%;
       font-size: large;

@@ -18,10 +18,10 @@ function showLoginModal() {
       return h(LoginModal, {
         showByDefault: true,
       });
-    }
+    },
   });
   app.directive('shake', {
-    updated: shake
+    updated: shake,
   });
   app.mount(div);
 }
