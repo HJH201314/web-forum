@@ -10,6 +10,9 @@ import Spinning from "@/components/spinning/Spinning.vue";
 import { delay } from "@/utils/delay";
 import useGlobal from '@/commands/useGlobal';
 import CusInput from '@/components/input/CusInput.vue';
+import CusToggle from '@/components/toggle/CusToggle.vue';
+import ToastManager from '@/components/toast/ToastManager';
+import { useRouter } from 'vue-router';
 
 const props = withDefaults(defineProps<{
   showByDefault?: boolean;
@@ -67,6 +70,7 @@ const loginForm = reactive({
   pin: ref(''),
   shakePhone: ref(0),
   shake: ref(0),
+  remember: ref(false),
 });
 const smsTip = ref('获取验证码');
 const emoji = ref('🚀');
@@ -75,6 +79,22 @@ function init() {
   emoji.value = '🚀';
   // @ts-ignore
   typer.value = new EasyTyper(typerObj, ['产品论坛', '立即登录']);
+  // 清除上次的表单
+  loginForm.password = '';
+  loginForm.retypePwd = '';
+  loginForm.pin = '';
+  loginForm.phone = '';
+  loginForm.email = '';
+  // 处理记住账号
+  if (userStore.isRememberUser) {
+    loginForm.remember = true;
+    loginForm.type = userStore.rememberUser.email ? 'email' : 'phone';
+    if (loginForm.type == 'phone') {
+      loginForm.phone = userStore.rememberUser.phone;
+    } else {
+      loginForm.email = userStore.rememberUser.email;
+    }
+  }
 }
 
 function handleChangeMode() {
@@ -207,13 +227,20 @@ watch(() => userStore.isLogin, (v) => {
     emoji.value = '🎉';
     // @ts-ignore
     typer.value = new EasyTyper(typerObj, '欢迎回来');
+    // 处理记住账号
+    if (loginForm.remember) {
+      userStore.setRememberUser(true, loginForm.type == 'phone' ? loginForm.phone : loginForm.email, loginForm.type);
+    } else {
+      userStore.setRememberUser(false);
+    }
+    // 关闭模态框
     setTimeout(() => {
       show.value = false;
     }, 1500);
   }
 });
 
-const globe = useGlobal();
+const router = useRouter();
 </script>
 
 <template>
@@ -272,9 +299,10 @@ const globe = useGlobal();
           </div>
         </form>
         <div class="login-footer">
+          <CusToggle label="记住账号" v-model="loginForm.remember" />
           <div v-if="loginForm.mode == 'login'">还未注册？<a href="javascript:void(0)" @click="handleChangeMode">点此立即注册</a><br /></div>
           <div v-if="loginForm.mode == 'register'">已有帐号？<a href="javascript:void(0)" @click="handleChangeMode">立即登录</a><br /></div>
-          我已阅读并同意<a href="http://localhost">《X产品论坛用户协议》</a>
+          我已阅读并同意<a :href="router.resolve('/post/1').fullPath" target="_blank">《X产品论坛用户协议》</a>
         </div>
       </div>
     </template>

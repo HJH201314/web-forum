@@ -3,7 +3,7 @@
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
 import DateFormat from "@/components/date-format/DateFormat.vue";
 import { MoreOne, ShareThree, CommentOne, ThumbsUp, DeleteOne } from "@icon-park/vue-next";
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import CommentView from "@/pages/post/components/CommentView.vue";
 import { convertPostImage } from "@/pages/post/utils/image";
@@ -77,6 +77,25 @@ const postTypeDesc = computed(() => {
       return '';
   }
 });
+
+/* 自动处理内容 */
+const contents = reactive({
+  text: ref(''),
+  title: ref(''),
+});
+watch(() => props.content, (val) => {
+  contents.title = '';
+  contents.text = val;
+  // [title:xxx]啊哈哈哈哈
+  const str = val;
+  const regex = /^\[title:(.*?)\]/; // 使用非贪婪模式匹配括号内的内容
+  const match = str.match(regex);
+  if (match) {
+    const matchTitle = match[1]; // 提取匹配的内容
+    contents.title = matchTitle;
+    contents.text = str.replace(regex, '');
+  }
+}, { immediate: true });
 
 const refContent = ref();
 const needReadMore = ref(false);
@@ -191,7 +210,8 @@ const router = useRouter();
       </CusPopover>
     </div>
     <div class="post-list-item-body">
-      <div ref="refContent" class="dili-text-ellipsis" :class="{'content-less': !readingMore}" v-html="props.content"></div>
+      <div class="title cus-text-ellipsis" v-html="contents.title"></div>
+      <div ref="refContent" class="content-normal" :class="{'cus-text-ellipsis': !props.singleUse, 'content-less': !readingMore, 'content-normal': readingMore}" v-html="contents.text"></div>
       <div v-if="needReadMore" class="unfold" @click="handleUnfold">{{ readingMore ? '收起' : '展开' }}</div>
       <div class="image-grid">
         <div class="image-item" :class="{'unlimited': largeImage == image}" v-for="image in props.images" :key="image" @click="handlePreviewImage(image)">
@@ -212,6 +232,7 @@ const router = useRouter();
 
 <style scoped lang="scss">
 @import "@/assets/main";
+@import "@/assets/preset";
 .post-list-item {
   position: relative;
   &-avatar {
@@ -270,12 +291,21 @@ const router = useRouter();
   &-body {
     margin-left: 4rem;
 
+    > .title {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
     > .content-less {
+      word-break: break-all;
+      white-space: pre-line;
       -webkit-line-clamp: 6;
       // max-height: 6rem;
       // overflow: hidden;
     }
     > .content-normal {
+      word-break: break-all;
+      white-space: pre-line;
       -webkit-line-clamp: none;
     }
 

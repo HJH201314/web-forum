@@ -13,6 +13,8 @@ import variables from '@/assets/variables.module.scss';
 import type { CusButtonProps } from '@/components/button/CusButton';
 import useLikeCacheStore from '@/stores/useLikeCacheStore';
 import { getLighterColor } from '@/utils/color';
+import useGlobal from '@/commands/useGlobal';
+import ToastManager from '@/components/toast/ToastManager';
 
 const props = withDefaults(defineProps<{
   postId?: string;
@@ -78,6 +80,24 @@ const buttonStyles = computed<CSSProperties[]>(() => {
   ];
 });
 
+function handleLikeClick() {
+  const key = 'post:' + props.postId;
+  likeCacheStore.like(key);
+  ToastManager.normal(`${likeCacheStore.isLiked(key) ? '' : '取消'}点赞成功`);
+}
+
+function handleStarClick() {
+  const key = 'post:star:' + props.postId;
+  likeCacheStore.like(key);
+  ToastManager.normal(`${likeCacheStore.isLiked(key) ? '' : '取消'}收藏成功`);
+}
+
+function handleShareClick() {
+  ToastManager.normal('暂不支持分享');
+}
+
+const globe = useGlobal();
+
 </script>
 
 <template>
@@ -98,20 +118,22 @@ const buttonStyles = computed<CSSProperties[]>(() => {
         default-tab="comment"
       />
     </div>
-    <div class="post-detail-bar" :style="{'left': actionBarLeft}">
-      <CusButton :button-style="buttonStyles[0]"
+    <div class="post-detail-bar" :class="{'small': globe.isSmallScreen}" :style="{'left': actionBarLeft}">
+      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[0]"
                  :type="likeCacheStore.isLiked('post:' + props.postId) ? 'primary' : 'normal'"
-                 @click="likeCacheStore.like('post:' + props.postId)"
+                 @click="handleLikeClick"
       >
         <Like size="1.5rem" />
       </CusButton>
-      <CusButton :button-style="buttonStyles[1]"
+      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[1]"
                  :type="likeCacheStore.isLiked('post:star:' + props.postId) ? 'primary' : 'normal'"
-                 @click="likeCacheStore.like('post:star:' + props.postId)"
+                 @click="handleStarClick"
       >
         <Star size="1.5rem" />
       </CusButton>
-      <CusButton :button-style="buttonStyles[2]">
+      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[2]"
+                 @click="handleShareClick"
+      >
         <ShareTwo size="1.5rem" />
       </CusButton>
     </div>
@@ -119,12 +141,18 @@ const buttonStyles = computed<CSSProperties[]>(() => {
 </template>
 
 <style scoped lang="scss">
+@import "@/assets/variables.module";
 .post-detail {
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
 
   &-card {
-    width: 70%;
+    width: 100%;
+    max-width: 1440px;
     margin-inline: auto;
     margin-top: 1rem;
+    margin-bottom: 1rem;
     padding: 1rem;
     background: white;
     border-radius: .5rem;
@@ -136,10 +164,19 @@ const buttonStyles = computed<CSSProperties[]>(() => {
     top: 5rem;
     display: flex;
     flex-direction: column;
-    gap: .25rem;
+    gap: .5rem;
+
+    &.small {
+      position: sticky;
+      right: 0;
+      bottom: .75rem;
+      margin: .25rem auto;
+      flex-direction: row;
+    }
 
     &-action {
-
+      border-radius: .5rem;
+      box-shadow: $box-shadow;
     }
   }
 

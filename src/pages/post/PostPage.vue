@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
-import { computed, onMounted, reactive, ref, watch, watchEffect } from "vue";
-import { Instagram, Topic, SettingOne } from '@icon-park/vue-next';
+import { reactive, ref, watch } from "vue";
+import { Instagram, Topic, SettingOne, VideoOne } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import { useRouter } from "vue-router";
 import showToast from "@/components/toast/toast";
 import ImagePicker from "@/components/image-picker/ImagePicker.vue";
 import type { ImagePickerFunc, ImagePickerModel } from "@/components/image-picker/ImagePicker";
+import type { VideoPickerFunc, VideoPickerModel } from '@/components/video-picker/VideoPicker';
 import adminApi from "@/apis/services/video-platform-admin";
 import { delay } from "@/utils/delay";
 import Spinning from "@/components/spinning/Spinning.vue";
@@ -16,14 +17,21 @@ import { getUserInfo } from '@/stores/publicUserInfo';
 import CusButton from '@/components/button/CusButton.vue';
 import { useIntersectionObserver } from '@vueuse/core';
 import useGlobal from '@/commands/useGlobal';
+import CusTooltip from '@/components/tooltip/CusTooltip.vue';
+import VideoPicker from '@/components/video-picker/VideoPicker.vue';
 
 const userStore = useUserStore();
 
 /* 图片选择组件实例 */
 const imagePickerRef = ref<ImagePickerFunc>();
+const videoPickerRef = ref<VideoPickerFunc>();
 
 function handleImageSelect() {
   imagePickerRef.value?.selectImage();
+}
+
+function handleVideoSelect() {
+  videoPickerRef.value?.selectVideo();
 }
 
 const publishForm = reactive({
@@ -32,6 +40,7 @@ const publishForm = reactive({
   title: ref(''),
   content: ref(''),
   images: ref<ImagePickerModel>([]),
+  videos: ref<VideoPickerModel>([]),
 });
 
 const router = useRouter();
@@ -102,8 +111,12 @@ async function handlePublishPost() {
     publishForm.images.forEach(image => {
       formData.append('images', image.file);
     });
+    let content = publishForm.content;
+    if (publishForm.title) {
+      content = `[title:${publishForm.title}]${content}`;
+    }
     const res = await adminApi.updatesControllerFix.publishUsingPost({
-      content: publishForm.content,
+      content: content,
     }, formData);
     if (res.data?.code == 200) {
       showToast({ type: 'success', text: '发布成功' });
@@ -137,10 +150,16 @@ async function handleLoadMore() {
   observeLoadMore.resume();
 }
 
+const MAX_TITLE_LENGTH = 50;
 const MAX_CONTENT_LENGTH = 1000;
 function handleContentInput() {
   if (publishForm.content.length > MAX_CONTENT_LENGTH) {
     publishForm.content = publishForm.content.slice(0, MAX_CONTENT_LENGTH);
+  }
+}
+function handleTitleInput() {
+  if (publishForm.title.length > MAX_TITLE_LENGTH) {
+    publishForm.title = publishForm.title.slice(0, MAX_TITLE_LENGTH);
   }
 }
 
@@ -190,20 +209,27 @@ const globe = useGlobal();
       <main class="post-center">
         <section v-if="userStore.isLogin" class="post-center-publish">
           <div class="header">
-            <div class="topic">
-              <topic theme="outline" size="1rem"/>
-              <span style="margin-left: .5rem;">选择板块</span>
-            </div>
+<!--            <div class="topic">-->
+<!--              <topic theme="outline" size="1rem"/>-->
+<!--              <span style="margin-left: .5rem;">选择板块</span>-->
+<!--            </div>-->
             <div v-show="publishForm.content" class="title">
-              <input type="text" placeholder="标题（选填）" v-model="publishForm.title" />
+              <input type="text" placeholder="标题（选填）" v-model="publishForm.title" @input="handleTitleInput" />
+              <span class="length-tip-title">{{ publishForm.title.length }} / {{ MAX_TITLE_LENGTH }}</span>
             </div>
           </div>
           <div class="input">
             <textarea placeholder="写下你的用户故事..." v-model="publishForm.content" @input="handleContentInput" />
             <ImagePicker ref="imagePickerRef" :show-select-on-empty="false" show-select-not-empty v-model="publishForm.images" />
+            <VideoPicker ref="videoPickerRef" :show-select-on-empty="false" :show-select-not-empty="false" v-model="publishForm.videos" />
             <div class="actions-placeholder"></div>
             <div class="actions">
-              <div class="action" @click="handleImageSelect"><span class="icon"><instagram theme="outline"/></span></div>
+              <CusTooltip position="bottom" text="添加图片">
+                <CusButton class="action" @click="handleImageSelect"><span class="icon"><instagram theme="outline"/></span></CusButton>
+              </CusTooltip>
+              <CusTooltip position="bottom" text="上传视频">
+                <CusButton class="action" @click="handleVideoSelect"><span class="icon"><video-one theme="outline"/></span></CusButton>
+              </CusTooltip>
               <span class="length-tip">{{ publishForm.content.length }} / {{ MAX_CONTENT_LENGTH }}</span>
               <div class="action"><span class="icon"><setting-one theme="outline"/></span></div>
               <CusButton type="primary" @click="handlePublishPost" :disabled="uploading" text="发布"><Spinning :show="uploading" /></CusButton>
@@ -343,7 +369,7 @@ const globe = useGlobal();
     display: flex;
     flex-direction: column;
     gap: .5rem;
-    overflow: hidden;
+
     &-publish {
       @extend %card;
       display: flex;
@@ -368,6 +394,15 @@ const globe = useGlobal();
 
         .title {
           flex: 1;
+          position: relative;
+
+          .length-tip-title {
+            position: absolute;
+            right: 0;
+            margin: auto 0;
+            font-size: .8rem;
+            color: $color-grey-500;
+          }
         }
       }
 
@@ -378,6 +413,9 @@ const globe = useGlobal();
         background-color: $color-grey-100;
         transition: all .2s $ease-out-circ;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
         textarea {
           width: 100%;
           height: 3.5rem;

@@ -741,6 +741,11 @@ const globe = useGlobal();
         > .content {
           font-size: .9rem;
           color: $color-black-lighter;
+          word-break: break-word;
+          word-wrap: break-word;
+          white-space: pre-wrap;
+          vertical-align: baseline;
+          overflow: hidden;
         }
         .footer {
           margin-top: .5rem;

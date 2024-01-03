@@ -23,7 +23,7 @@ const globe = useGlobal();
       <span class="text" :class="{'text--small': globe.isSmallScreen}">Fast, Convenient</span>
     </div>
     <div class="actions">
-      <CusButton type="primary" text="文档" @click="router.push('/login')"></CusButton>
+<!--      <CusButton type="primary" text="文档" @click="router.push('/login')"></CusButton>-->
       <CusButton type="primary" text="产品论坛" @click="router.push('/post')"></CusButton>
     </div>
 
