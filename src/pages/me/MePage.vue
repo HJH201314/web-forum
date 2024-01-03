@@ -11,12 +11,12 @@ import '@vuepic/vue-datepicker/dist/main.css';
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
 const posts = ref<PostItemCardProps[]>([]); // 所有的帖子
-const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
+// const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
 const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
 let signature = ref(''); // 个性签名
 let signatureLen = ref(signature.value.length); // 个性签名长度
-let date = ref(new Date().toLocaleDateString()).value.replace('/', '-').replace('/','-'); // 生日
+let date = ref(new Date().toLocaleDateString()).value.replace('/', '-').replace('/', '-'); // 生日
 const maleColor = ref('#F5F5F5FF'); // 性别颜色
 const femaleColor = ref('#F5F5F5FF'); // 性别颜色
 const address = ref([
@@ -385,6 +385,13 @@ const newPwd = ref('');
 const confirmPwd = ref('');
 const newPwdTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
 const confirmTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
+
+const infoString = ref(localStorage.getItem('info'));
+let gender = ref(''); // 性别
+// let nickname = ref(userStore.userInfo?.name); // 昵称
+let nickname = ref(''); // 昵称
+// const avatar = ref(''); // 头像
+const birthday = ref('');
 // 校验新密码
 watch(() => newPwd.value, (newValue) => {
   if (newValue.length < 6 || newValue.length > 30) {
@@ -419,17 +426,7 @@ watch(() => confirmPwd.value, (newValue) => {
   }
 });
 
-function choseMale() {
-  maleColor.value = '#adb7ff';
-  femaleColor.value = '#F5F5F5FF';
-}
-
-function choseFemale() {
-  maleColor.value = '#F5F5F5FF';
-  femaleColor.value = '#efcaff';
-}
-
-// 限制个性签名长度不超过100
+// 限制个性签名长度不超过200
 watch(signature, (newValue, oldValue) => {
   signatureLen.value = newValue.length;
   if (newValue.length > 200) {
@@ -437,16 +434,52 @@ watch(signature, (newValue, oldValue) => {
   }
 });
 
-// 修改用户资料
-async function edit() {
-  editing.value = true;
+// 选择男
+function choseMale() {
+  maleColor.value = '#adb7ff';
+  femaleColor.value = '#F5F5F5FF';
+  gender.value = 'male';
 }
 
+// 选择女
+function choseFemale() {
+  maleColor.value = '#F5F5F5FF';
+  femaleColor.value = '#efcaff';
+  gender.value = 'female';
+}
+
+// 打开修改区域，加载本地数据
+function edit() {
+  editing.value = true;
+  if (infoString.value) {
+    console.log('load');
+    let infoArray = JSON.parse(infoString.value);
+    console.log(infoArray);
+    // avatar.value = infoArray.find('avatar')?.avatar;
+    nickname.value = infoArray.find(item => 'nickname' in item)?.nickname;
+    gender.value = infoArray.find(item => 'gender' in item)?.gender;
+    console.log(gender.value);
+    if (gender.value == 'male') {
+      // choseMale();
+      console.log('male');
+      maleColor.value = '#adb7ff';
+    }
+    else {
+      choseFemale();
+      femaleColor.value = '#efcaff';
+    }
+    birthday.value = infoArray.find(item => 'birthday' in item)?.birthday;
+    selectedAddress.value = infoArray.find(item =>'selectedAddress' in item)?.selectedAddress;
+    signature.value = infoArray.find(item => 'signature' in item)?.signature;
+  }
+}
+
+// 提交修改的表单
 function submitForm() {
 
 }
 
-// 删除帖子
+// todo 删除帖子
 function handlePostDeleted(id: number) {
   posts.value.forEach((item, index) => {
     if (item.postId == id) {
@@ -455,7 +488,7 @@ function handlePostDeleted(id: number) {
   });
 }
 
-// 加载更多帖子
+// todo 加载更多
 function handleLoadMore() {
 
 }
@@ -473,6 +506,7 @@ function changeAvatar() {
         reader.onload = (e) => {
           let result = (e.target as FileReader).result;
           if (result) {
+            // 保存到localstorage
             localStorage.setItem('avatar', result.toString());
             userStore.avatar = result.toString();
           }
@@ -484,7 +518,19 @@ function changeAvatar() {
 
 // 保存修改
 function save() {
-
+  console.log(nickname.value);
+  let infoArray = [
+    {
+      nickname: nickname.value,
+      gender: gender.value,
+      birthday: birthday.value,
+      selectedAddress: selectedAddress.value,
+      signature: signature.value,
+    }];
+  let infoString = JSON.stringify(infoArray);
+  localStorage.setItem('info', infoString);
+  console.log('save');
+  console.log(infoArray);
 }
 </script>
 
@@ -517,7 +563,7 @@ function save() {
           </div>
         </section>
         <section class = "me-main-posts">
-          <PostItemCard v-for = "item in myPosts" :key = "item.postId" :avatar = "item.avatar"
+          <PostItemCard v-for = "item in posts" :key = "item.postId" :avatar = "item.avatar"
                         :comment-count = "item.commentCount"
                         :content = "item.content"
                         :create-time = "item.createTime"
@@ -540,7 +586,7 @@ function save() {
           <form class = "me-main-edit-form" @submit.prevent = "submitForm">
             <div class = "me-main-edit-form-avatar">
               <img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
-              <input id="change-avatar" accept=".jpeg, .jpg, .png" style="display: none" type = "file">
+              <input id = "change-avatar" accept = ".jpeg, .jpg, .png" style = "display: none" type = "file">
               <div class = "me-main-edit-form-avatar-icon" @click = "changeAvatar">
                 <svg class = "h-4 w-4 text-green-s dark:text-dark-green-s" fill = "white" height = "1em"
                      viewBox = "0 0 24 24" width = "1em" xmlns = "http://www.w3.org/2000/svg">
@@ -553,7 +599,7 @@ function save() {
             <div class = "me-main-edit-form-bar">
               <div class = "nickname">
                 <label for = "nickname">昵称</label>
-                <CusInput id = "nickname" :placeholder = "userStore.userInfo?.name" type = "text"></CusInput>
+                <CusInput id = "nickname" v-model="nickname" :placeholder = "nickname" type = "text"></CusInput>
               </div>
               <div class = "gender">
                 <label for = "gender">性别</label>
@@ -624,7 +670,7 @@ function save() {
                 <span id = "confirmTip" class = "tips">{{ confirmTip }}</span>
               </div>
             </div>
-            <div class="me-main-edit-form-bar">
+            <div class = "me-main-edit-form-bar">
               <CusButton text = "保存" type = "success" @click = "save"></CusButton>
             </div>
           </form>
@@ -890,11 +936,12 @@ function save() {
               padding: .5rem;
               resize: none;
               border-radius: .5rem;
+              border: 2px solid transparent;
             }
             
             // todo 点击时边框大小会改变
             textarea:focus {
-              border: solid $color-primary
+              border: 2px solid $color-primary
             }
             
           }
