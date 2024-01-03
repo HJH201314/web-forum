@@ -5,14 +5,11 @@ import { computed, type CSSProperties, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import adminApi from "@/apis/services/video-platform-admin";
 import showToast from "@/components/toast/toast";
-import { Like, Star, ShareTwo } from "@icon-park/vue-next";
+import { Like, Star, ShareTwo, Back } from "@icon-park/vue-next";
 import CusButton from "@/components/button/CusButton.vue";
-import { getDefaultAvatar, getDefaultAvatarByUid } from '@/constants/defaultImage';
+import { getDefaultAvatarByUid } from '@/constants/defaultImage';
 import useUserInfo from '@/stores/publicUserInfo';
-import variables from '@/assets/variables.module.scss';
-import type { CusButtonProps } from '@/components/button/CusButton';
 import useLikeCacheStore from '@/stores/useLikeCacheStore';
-import { getLighterColor } from '@/utils/color';
 import useGlobal from '@/commands/useGlobal';
 import ToastManager from '@/components/toast/ToastManager';
 import { convertUserFile } from '@/pages/post/utils/image';
@@ -81,6 +78,11 @@ const buttonStyles = computed<CSSProperties[]>(() => {
   ];
 });
 
+const router = useRouter();
+function handleBackClick() {
+  useRouter().go(-1);
+}
+
 function handleLikeClick() {
   const key = 'post:' + props.postId;
   likeCacheStore.like(key);
@@ -103,6 +105,14 @@ const globe = useGlobal();
 
 <template>
   <div class="post-detail">
+    <div class="post-detail-return" :class="{'small': globe.isSmallScreen}" :style="{'right': actionBarLeft}">
+      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[0]"
+                 :type="likeCacheStore.isLiked('post:' + props.postId) ? 'primary' : 'normal'"
+                 @click="handleBackClick"
+      >
+        <Back size="1.5rem" />
+      </CusButton>
+    </div>
     <div ref="postItemCardRef" class="post-detail-card">
       <PostItemCard
         type="post"
@@ -158,6 +168,14 @@ const globe = useGlobal();
     background: white;
     border-radius: .5rem;
     box-sizing: border-box;
+  }
+
+  &-return {
+    position: absolute;
+    top: 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
   }
 
   &-bar {

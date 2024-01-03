@@ -4,6 +4,8 @@ import securityApi from "@/apis/services/video-platform-security";
 import adminApi from "@/apis/services/video-platform-admin";
 import { useLocalStorage } from "@vueuse/core";
 import { convertUserFile } from '@/pages/post/utils/image';
+import { delay } from '@/utils/delay';
+import { SHA256 } from 'crypto-js';
 
 const useUserStore = defineStore('user', () => {
 
@@ -41,18 +43,38 @@ const useUserStore = defineStore('user', () => {
     }
   }
 
+  async function saveName(name: string) {
+    const res = await securityApi.loginController.updateUserUsingPost({
+      name: name,
+    });
+    if (res.data.code === 200) {
+      await getUserInfo();
+      return true;
+    }
+    return false;
+  }
+
+  async function savePassword(password: string) {
+    const res = await securityApi.loginController.updateUserUsingPost({
+      password: SHA256(password).toString(),
+    });
+    return res.data.code === 200;
+  }
+
   async function uploadAvatar(file: File) {
     const formData = new FormData();
     formData.append('file', file);
     const res = await adminApi.updatesControllerFix.uploadFileUsingPost(formData);
     if (res.data.code === 200) {
-      avatar.value = res.data.data ?? '';
+      avatar.value = convertUserFile(res.data.data) ?? '';
       // 请求更新用户信息
       const res2 = await securityApi.loginController.updateUserUsingPost({
         avatar: res.data.data,
       });
       if (res2.data.code === 200) {
-        getUserInfo().then();
+        delay(1000).then(() => {
+          getUserInfo();
+        });
         return true;
       }
     }
@@ -68,12 +90,9 @@ const useUserStore = defineStore('user', () => {
     }
     if (res?.data.code === 200) {
       tokenStorage.value = res.data.data ?? '';
-      await nextTick(async () => {
+      await nextTick(() => {
         // 获取用户信息
-        const res2 = await securityApi.loginController.getCurrentUserUsingGet({token: tokenStorage.value});
-        userInfoStorage.value = res2.data.data ?? {};
-        avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res2.data.data?.id}`;
-        console.log('user_info', userInfoStorage.value);
+        getUserInfo();
       });
       return res?.data;
     } else {
@@ -140,6 +159,8 @@ const useUserStore = defineStore('user', () => {
     sendPin,
     register,
     uploadAvatar,
+    saveName,
+    savePassword,
     isRememberUser,
     rememberUser,
     setRememberUser,
