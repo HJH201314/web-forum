@@ -46,7 +46,7 @@ const rightEntries = ref<Entry[]>([
   {
     key: "me",
     name: "个人中心",
-    icon: 'user',
+    icon: 'winking-face',
     href: "/me",
   },
 ]);
@@ -253,8 +253,10 @@ const globe = useGlobal();
         <li v-for="entry in rightEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
           <CusPopover position="bottom">
             <template #body>
-              <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
-              <component :is="entry.icon" style="font-size: 1.5rem;"></component>
+              <div style="display: flex; flex-direction: row; align-items: center; gap: .25rem;">
+                <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
+                <component :is="entry.icon" style="font-size: 1.5rem;"></component>
+              </div>
               <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
             </template>
           </CusPopover>
@@ -268,7 +270,7 @@ const globe = useGlobal();
             >
               <Login size="1.25rem" />
             </CusButton>
-            <img class="nav-user-avatar" v-if="userStore.isLogin" :src="userStore.avatar ?? DEFAULT_USER_AVATAR"
+            <img class="nav-user-avatar" v-if="userStore.isLogin" :src="userStore.userInfo.avatar ?? DEFAULT_USER_AVATAR"
                  alt="avatar" />
           </div>
         </template>

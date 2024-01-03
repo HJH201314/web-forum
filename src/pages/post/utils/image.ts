@@ -14,6 +14,6 @@ export function convertPostImage(path?: string) {
  * @param uuid
  */
 export function convertUserFile(uuid?: string) {
-  if (!uuid) return "";
+  if (!uuid) return undefined;
   return `${SERVER_API_URL}/minio/video-platform.user/${uuid}`;
 }

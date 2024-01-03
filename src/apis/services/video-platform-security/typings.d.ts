@@ -4,6 +4,12 @@ declare namespace API {
     type?: number;
   };
 
+  type CommonResultBoolean_ = {
+    code?: number;
+    data?: boolean;
+    message?: string;
+  };
+
   type CommonResultString_ = {
     code?: number;
     data?: string;
@@ -34,6 +40,8 @@ declare namespace API {
   };
 
   type User = {
+    /** 头像 */
+    avatar?: string;
     /** 邮箱 */
     email?: string;
     /** uid */

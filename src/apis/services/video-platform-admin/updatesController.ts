@@ -4,7 +4,7 @@ import { request } from './base';
 
 /** 获取所有图文动态 GET /updates/all */
 export async function allEssayUsingGet(options?: { [key: string]: any }) {
-  return request<API.CommonResultListUpdate_>('/updates/all', {
+  return request<API.CommonResultListUpdateVo_>('/updates/all', {
     method: 'GET',
     ...(options || {}),
   });
@@ -91,13 +91,13 @@ export async function updateUsingPut(
 export async function publishUsingPost(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.publishUsingPOSTParams,
-  body: FormData,
+  body: string[],
   options?: { [key: string]: any },
 ) {
   return request<API.CommonResultInt_>('/updates/essay', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/multipart/form-data',
+      'Content-Type': 'application/json',
     },
     params: {
       ...params,
@@ -155,10 +155,10 @@ export async function getEssayByIdUsingGet(
 export async function getInPageUsingGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getInPageUsingGETParams,
-  body?: API.UpdateSearchDto,
+  body: API.UpdateSearchDto,
   options?: { [key: string]: any },
 ) {
-  return request<API.CommonResultListUpdate_>('/updates/inPage', {
+  return request<API.CommonResultListUpdateVo_>('/updates/inPage', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -167,6 +167,22 @@ export async function getInPageUsingGet(
       ...params,
     },
     data: body,
+    ...(options || {}),
+  });
+}
+
+/** 点赞 POST /updates/like/${param0} */
+export async function likeUsingPost(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.likeUsingPOSTParams,
+  options?: { [key: string]: any },
+) {
+  const { updateId: param0, ...queryParams } = params;
+  return request<API.CommonResultString_>(`/updates/like/${param0}`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
     ...(options || {}),
   });
 }

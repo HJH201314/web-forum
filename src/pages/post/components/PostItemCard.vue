@@ -188,15 +188,24 @@ function toggleMore() {
   showMore.value = !showMore.value;
 }
 
-const likeClicked = ref(false);
-const likeCount = ref(props.likeCount);
+const likeClicked = ref(props.isLiked);
+const likeCount = ref(props.likeCount + (props.isLiked ? 1 : 0));
 function handleLikeClick() {
   if (!userStore.isLogin) {
     showToast({position: 'top', text: '请登录以进行点赞'});
     return;
   }
-  likeClicked.value = !likeClicked.value;
-  likeCount.value += likeClicked.value ? 1 : -1;
+  // 请求点赞
+  adminApi.updatesController.likeUsingPost({
+    updateId: props.postId,
+    flag: likeClicked.value ? -1 : 1,
+  }).then(res => {
+    if (res.data.code == 200) {
+      showToast({position: 'top', text: likeClicked.value ? '取消点赞成功' : '点赞成功'});
+      likeClicked.value = !likeClicked.value;
+      likeCount.value += likeClicked.value ? 1 : -1;
+    }
+  }).catch();
 }
 
 const largeImage = ref(''); // 放大查看的image

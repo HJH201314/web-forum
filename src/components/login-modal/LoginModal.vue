@@ -156,19 +156,24 @@ function setGetPinAvailable() {
 
 const submitLoading = ref(false);
 async function handleLoginSubmit() {
-  if (loginForm.type == 'email' && (!loginForm.email || !loginForm.email.match(/.+@.+\..+/))) {
+  if (loginForm.type == 'email' && !loginForm.email.match(/.+@.+\..+/)) {
     loginForm.shake += 1;
     showToast({ text: '请正确输入邮箱！', position: 'bottom', type: 'danger' });
     return;
   }
-  if (loginForm.type == 'phone' && (!loginForm.phone || !loginForm.phone.match(/^1[3456789]\d{9}$/))) {
+  if (loginForm.type == 'phone' && !loginForm.phone.match(/^1\d{10}$/)) {
     loginForm.shake += 1;
     showToast({ text: '请正确输入手机号！', position: 'bottom', type: 'danger' });
     return;
   }
-  if (loginForm.type == 'phone' && !loginForm.password) {
+  if (loginForm.type == 'phone' && loginForm.mode == 'register' && !loginForm.password.match(/^(?=.*[0-9])(?=.*[a-zA-Z]).{6,30}$/)) {
     loginForm.shake += 1;
-    showToast({ text: '请输入密码！', position: 'bottom', type: 'danger' });
+    showToast({ text: '密码强度不足！', position: 'bottom', type: 'danger' });
+    return;
+  }
+  if (loginForm.type == 'phone' && loginForm.mode == 'login' && !loginForm.password.match(/^.{6,30}$/)) {
+    loginForm.shake += 1;
+    showToast({ text: '请正确输入密码！', position: 'bottom', type: 'danger' });
     return;
   }
   if (loginForm.mode == 'register' && loginForm.type == 'phone' && loginForm.retypePwd != loginForm.password) {
@@ -176,9 +181,9 @@ async function handleLoginSubmit() {
     showToast({ text: '重复输入密码错误！', position: 'bottom', type: 'danger' });
     return;
   }
-  if (loginForm.type == 'email' && !loginForm.pin) {
+  if (loginForm.type == 'email' && !loginForm.pin.match(/^\d{6}$/)) {
     loginForm.shake += 1;
-    showToast({ text: '请输入验证码！', position: 'bottom', type: 'danger' });
+    showToast({ text: '请正确输入验证码！', position: 'bottom', type: 'danger' });
     return;
   }
   try {
@@ -194,8 +199,8 @@ async function handleLoginSubmit() {
     }
     if (loginForm.mode == 'login') {
       const result = await userStore.login(loginForm.type, principal, credential);
-      if (!result?.data) {
-        showToast({ text: `登录失败，${result?.message}`, position: 'bottom', type: 'danger' });
+      if (result?.code != 200) {
+        showToast({ text: `登录失败，${result?.data}`, position: 'bottom', type: 'danger' });
       }
     } else if (loginForm.mode == 'register') {
       const result = await userStore.register(loginForm.type, principal, credential);

@@ -1,7 +1,9 @@
-import { defineStore } from 'pinia';
-import { computed, nextTick, onMounted, ref } from 'vue';
-import securityApi from '@/apis/services/video-platform-security';
-import { useLocalStorage } from '@vueuse/core';
+import { acceptHMRUpdate, defineStore } from 'pinia';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import securityApi from "@/apis/services/video-platform-security";
+import adminApi from "@/apis/services/video-platform-admin";
+import { useLocalStorage } from "@vueuse/core";
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const useUserStore = defineStore('user', () => {
 
@@ -28,17 +30,32 @@ const useUserStore = defineStore('user', () => {
     try {
       const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
       userInfoStorage.value = res.data.data ?? {};
-      if (localStorage.getItem('avatar')) {
-        avatar.value = localStorage.getItem('avatar') ?? '';
-      } else {
-        avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
-      }
+      avatar.value = convertUserFile(res.data.data?.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
+      userInfoStorage.value.avatar = avatar.value;
+      console.log('avatar', avatar.value);
       console.log('user_info', userInfoStorage.value);
     } catch (e) {
       console.error(e);
       userInfoStorage.value = {};
       avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=notlogin`;
     }
+  }
+
+  async function uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await adminApi.userInfoController.uploadFileUsingPost(formData);
+    if (res.data.code === 200) {
+      avatar.value = res.data.data ?? '';
+      // 请求更新用户信息
+      const res2 = await securityApi.loginController.updateUserUsingPost({
+        avatar: res.data.data,
+      });
+      if (res2.data.code === 200) {
+        return true;
+      }
+    }
+    return false;
   }
 
   const login = async (type: 'phone' | 'email', principal: string, credential: string) => {
@@ -59,7 +76,7 @@ const useUserStore = defineStore('user', () => {
       });
       return res?.data;
     } else {
-      return {};
+      return res?.data;
     }
   };
 
@@ -121,6 +138,7 @@ const useUserStore = defineStore('user', () => {
     logout,
     sendPin,
     register,
+    uploadAvatar,
     isRememberUser,
     rememberUser,
     setRememberUser,
@@ -128,3 +146,7 @@ const useUserStore = defineStore('user', () => {
 });
 
 export default useUserStore;
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useUserStore, import.meta.hot));
+}

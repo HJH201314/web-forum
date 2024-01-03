@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from 'vue';
 import { Instagram, Topic, SettingOne, VideoOne, VoiceOne } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
@@ -23,6 +23,7 @@ import AudioPicker from '@/components/audio-picker/AudioPicker.vue';
 import type { AudioPickerFunc, AudioPickerModel } from '@/components/audio-picker/AudioPicker';
 import ToastManager from '@/components/toast/ToastManager';
 import { DialogManager } from '@/components/dialog';
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const userStore = useUserStore();
 
@@ -59,7 +60,7 @@ const posts = ref<PostItemCardProps[]>([]);
 const currentPage = ref(0); // 首页为1，但是handleLoadMore会先+1，所以初始值为0
 const hasNoMore = ref(false);
 
-const postResult = ref<API.Update[]>();
+const postResult = ref<API.UpdateVo[]>();
 
 watch(() => postResult.value, async () => {
   if (!postResult.value) return;
@@ -71,11 +72,11 @@ watch(() => postResult.value, async () => {
       postId: item.id ?? -1,
       userId: item.uid ?? -1,
       userName: userInfo.name ?? '测试用户',
-      avatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.uid}`,
+      avatar: convertUserFile(userInfo.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.uid}`,
       forwardCount: 0,
       commentCount: 0,
       likeCount: 0,
-      isLiked: false,
+      isLiked: item.isLiked ?? false,
       createTime: item.uploadTime ? new Date(item.uploadTime).toLocaleString() : new Date().toLocaleString(),
       images: JSON.parse(item.urls ?? '[]'),
       content: item.content ? decodeURIComponent(item.content) : '',
@@ -85,8 +86,23 @@ watch(() => postResult.value, async () => {
 });
 
 const userPostCount = ref(0);
+const userLikeCount = ref(0);
+const userPoint = computed(() => {
+  return userPostCount.value * 100 + userLikeCount.value * 8;
+});
+const userLevelName = computed(() => {
+  if (userPoint.value < 1000) {
+    return '初来乍到';
+  } else if (userPoint.value < 5000) {
+    return '小有名气';
+  } else if (userPoint.value < 15000) {
+    return '名声显赫';
+  } else {
+    return '大名鼎鼎';
+  }
+});
 // 检测用户id，获取用户帖子信息
-watch(() => userStore.userInfo.id, async (newVal) => {
+watch(() => userStore.userInfo?.id, async (newVal) => {
   if (newVal != undefined) {
     try {
       const res = await adminApi.updatesController.countUpdatesUsingGet({
@@ -94,6 +110,16 @@ watch(() => userStore.userInfo.id, async (newVal) => {
       });
       if (res.data?.code == 200) {
         userPostCount.value = res.data.data ?? 0;
+      }
+    } catch (e) {
+      // ignore
+    }
+    try {
+      const res = await adminApi.userInfoController.getLikeCountByUidUsingGet({
+        uid: newVal,
+      });
+      if (res.data?.code == 200) {
+        userLikeCount.value = res.data.data ?? 0;
       }
     } catch (e) {
       // ignore
@@ -263,7 +289,7 @@ function clearInput() {
   publishForm.videos = [];
   publishForm.audios = [];
   currentPage.value = 0;
-  posts.value = [];
+  // posts.value = [];
 }
 
 /* 上传数量限制 */
@@ -304,13 +330,13 @@ const globe = useGlobal();
       <aside class="post-left" v-if="globe.isLargeScreen">
         <section ref="postLeftUserRef" class="post-left-user" v-if="userStore.isLogin">
           <div>
-            <div class="avatar"><img :src="userStore.avatar ?? DEFAULT_USER_AVATAR" alt="post-user-avatar" /></div>
-            <div class="right"><span class="username">{{ userStore.userInfo?.name ?? '匿名用户' }}</span><br /><span class="vip">初级用户</span></div>
+            <div class="avatar"><img :src="userStore.userInfo.avatar ?? DEFAULT_USER_AVATAR" alt="post-user-avatar" /></div>
+            <div class="right"><span class="username">{{ userStore.userInfo?.name ?? '匿名用户' }}</span><br /><span class="vip">{{ userLevelName }}</span></div>
           </div>
           <div class="stats">
-            <div id="post-left-user-follow" class="stats-item"><span>{{ 1024 }}</span><span>成长值</span></div>
-            <div id="post-left-user-fans" class="stats-item"><span>{{ userPostCount }}</span><span>帖子</span></div>
-            <div id="post-left-user-fans" class="stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
+            <div id="post-left-user-follow" class="stats-item"><span>{{ userPostCount * 100 + userLikeCount * 8 }}</span><span>成长值</span></div>
+            <div id="post-left-user-fans" class="stats-item" @click="ToastManager.normal(`真棒，你已经发表了${userPostCount}篇帖子！`)"><span>{{ userPostCount }}</span><span>帖子</span></div>
+            <div id="post-left-user-fans" class="stats-item" @click="ToastManager.normal(`真棒，你已经点过${userLikeCount}个赞！`)"><span>{{ userLikeCount }}</span><span>点赞</span></div>
           </div>
         </section>
         <section class="post-left-live">
@@ -384,6 +410,18 @@ const globe = useGlobal();
       <aside class="post-right" v-if="globe.isLargeScreen">
         <section class="post-right-notice">
           站点公告
+          <div class="post-right-notice-item">
+            🥳 X产品论坛正式上线啦！
+          </div>
+          <div class="post-right-notice-item">
+            🧧 千万红包雨等你来拿！
+          </div>
+          <div class="post-right-notice-item" @click="router.push('/post/74')">
+            🍕 立即下载X插件管理器——
+          </div>
+          <div class="post-right-notice-item" @click="router.push('/post/1')">
+            ⚠️ 点此查看论坛规章制度
+          </div>
         </section>
         <section class="post-right-topics">
           热议话题
@@ -637,6 +675,16 @@ const globe = useGlobal();
     gap: .5rem;
     &-notice {
       @extend %card;
+      &-item {
+        cursor: pointer;
+        padding: .25rem .5rem;
+        border-radius: .5rem;
+        margin-top: .5rem;
+        transition: background-color .2s $ease-out-circ;
+        &:hover {
+          background-color: $color-grey-200;
+        }
+      }
     }
     &-topics {
       @extend %card;

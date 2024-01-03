@@ -14,6 +14,7 @@ import CusPopover from "@/components/popover/CusPopover.vue";
 import variables from "@/assets/variables.module.scss";
 import { DialogManager } from "@/components/dialog";
 import useGlobal from '@/commands/useGlobal';
+import useUserInfo, { getUserInfo } from '@/stores/publicUserInfo';
 
 const props = withDefaults(defineProps<{
   postId: number; // 动态id
@@ -78,7 +79,7 @@ watchEffect(async () => {
   for (const item of commentsResult.value.list) {
     const subComments: CommentItem[] = [];
     for (const subItem of item.children ?? []) {
-      subComments.push(convertCommentVOToCommentItem(subItem, 'sub'));
+      subComments.push(await convertCommentVOToCommentItem(subItem, 'sub'));
     }
     let totalSubComments = 0;
     // 如果有子评论，那么获取子评论的总数
@@ -90,10 +91,11 @@ watchEffect(async () => {
         totalSubComments = res.data.data ?? 0;
       }
     }
+    const userInfo = await getUserInfo(item.userId ?? -1);
     comments.value.push({
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
+      userAvatar: userInfo.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       targetUsername: item.targetUsername,
@@ -112,12 +114,13 @@ const form = reactive({
   reply: '',
 });
 
-function convertCommentVOToCommentItem(item: API.Comment, type: 'sub'): CommentItem {
+async function convertCommentVOToCommentItem(item: API.Comment, type: 'sub'): Promise<CommentItem> {
   if (type == 'sub') {
+    const userInfo = await getUserInfo(item.userId ?? -1);
     return {
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
+      userAvatar: userInfo.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       content: item.content ?? '',
@@ -213,7 +216,7 @@ async function handleCommentDelete(commentId: string) {
   }
   const dialogRes = await DialogManager.commonDialog({
     title: '删除评论',
-    content: `确认要删除该评论吗？`,
+    content: `确认要删除该评论及其子评论吗？`,
   });
   if (!dialogRes) return;
   try {
@@ -269,6 +272,7 @@ async function handleCommentToTop(commentId: string) {
     });
     if (res.data.code == 200) {
       showToast({position: 'top', text: '置顶成功'});
+      likeCacheStore.forceLike('top:' + commentId);
       refetchComments();
     } else {
       showToast({position: 'top', text: '置顶失败'});
@@ -290,6 +294,7 @@ async function handleCommentToGround(commentId: string) {
     });
     if (res.data.code == 200) {
       showToast({position: 'top', text: '取消置顶成功'});
+      likeCacheStore.forceCancelLike('top:' + commentId);
       refetchComments();
     } else {
       showToast({position: 'top', text: '取消置顶失败'});
@@ -479,7 +484,7 @@ const globe = useGlobal();
     </div>
     <div class="comment-publish" v-if="userStore.isLogin">
       <div class="avatar">
-        <img :src="userStore.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${userStore.userInfo.id}`" alt="avatar" />
+        <img :src="userStore.userInfo.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${userStore.userInfo.id}`" alt="avatar" />
       </div>
       <div class="input">
         <textarea placeholder="你猜我的评论区在等谁？" v-model="form.comment" />
@@ -495,7 +500,8 @@ const globe = useGlobal();
         <div class="body">
           <div class="header user-info">
             <span class="name">{{ comment.userName }}</span>
-<!--            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>-->
+            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>
+            <span class="top" v-if="likeCacheStore.isLiked('top:' + comment.id)">置顶</span>
           </div>
           <div class="content">{{ comment.content }}</div>
           <div class="footer">
@@ -530,7 +536,7 @@ const globe = useGlobal();
             <div class="input">
               <textarea :placeholder="'回复 @'+comment.userName" v-model="form.reply" />
             </div>
-            <button class="publish" :class="{'enable': form.reply.length > 0}" @click="handleReplyPublish" :disabled="!form.reply.length">
+            <button class="publish" :class="{'enable': form.reply.length > 0}" @click="handleReplyPublish" :disabled="!form.reply.length || replyPublishing">
               <span v-if="!replyPublishing">发布</span>
               <Spinning v-if="replyPublishing" />
             </button>
@@ -570,7 +576,7 @@ const globe = useGlobal();
                   <div class="input">
                     <textarea :placeholder="'回复 @'+subComment.userName" v-model="form.reply" />
                   </div>
-                  <button class="publish" :class="{'enable': form.reply.length > 0}" @click="handleReplyPublish" :disabled="!form.reply.length">
+                  <button class="publish" :class="{'enable': form.reply.length > 0}" @click="handleReplyPublish" :disabled="!form.reply.length || replyPublishing">
                     <span v-if="!replyPublishing">发布</span>
                     <Spinning v-if="replyPublishing" />
                   </button>
@@ -718,6 +724,7 @@ const globe = useGlobal();
             word-wrap: break-word;
             white-space: pre-wrap;
             overflow: hidden;
+            width: 100%;
             .name {
               white-space: nowrap; // 避免挤压换行
               font-size: .9rem;
@@ -727,6 +734,16 @@ const globe = useGlobal();
               white-space: nowrap; // 避免挤压换行
               font-size: .75rem;
               color: $color-grey-500;
+            }
+            .top {
+              margin-left: auto;
+              margin-right: .5rem;
+              white-space: nowrap; // 避免挤压换行
+              font-size: .75rem;
+              color: white;
+              background-color: $color-primary;
+              padding: .1rem .25rem;
+              border-radius: .25rem;
             }
           }
           > .content {

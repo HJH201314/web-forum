@@ -34,6 +34,45 @@ declare namespace API {
     time?: number;
   };
 
+  type Comment = {
+    /** 子评论 */
+    children?: Comment[];
+    /** 评论内容 */
+    content?: string;
+    /** 评论时间 */
+    createTime?: string;
+    /** 评论对象的id */
+    foreignId?: number;
+    /** id，主键 */
+    id?: string;
+    /** 是否置顶（1：置顶 0：不置顶） */
+    isTop?: number;
+    /** 点赞数量 */
+    likeNum?: number;
+    /** 回复数量 */
+    replyNum?: number;
+    /** 回复的用户 */
+    targetUsername?: string;
+    /** 用户id */
+    userId?: number;
+    /** 用户名 */
+    username?: string;
+  };
+
+  type CommentVo = {
+    children?: CommentVo[];
+    content?: string;
+    createTime?: string;
+    foreignId?: number;
+    id?: string;
+    isLiked?: boolean;
+    likeNum?: number;
+    replyNum?: number;
+    targetUsername?: string;
+    userId?: number;
+    username?: string;
+  };
+
   type CommonResult = {
     code?: number;
     data?: Record<string, any>;
@@ -94,6 +133,12 @@ declare namespace API {
     message?: string;
   };
 
+  type CommonResultListResultCommentVo_ = {
+    code?: number;
+    data?: ListResultCommentVo_;
+    message?: string;
+  };
+
   type CommonResultListResultUserSearchDoc_ = {
     code?: number;
     data?: ListResultUserSearchDoc_;
@@ -106,15 +151,21 @@ declare namespace API {
     message?: string;
   };
 
-  type CommonResultListUpdate_ = {
+  type CommonResultListUpdateVo_ = {
     code?: number;
-    data?: Update[];
+    data?: UpdateVo[];
     message?: string;
   };
 
   type CommonResultListVideoVo_ = {
     code?: number;
     data?: VideoVo[];
+    message?: string;
+  };
+
+  type CommonResultLong_ = {
+    code?: number;
+    data?: string;
     message?: string;
   };
 
@@ -154,9 +205,26 @@ declare namespace API {
     message?: string;
   };
 
+  type countChildrenCommentsByPidUsingGETParams = {
+    /** 要获取子评论的根评论id */
+    pid: string;
+  };
+
+  type countCommentsByForeignIdUsingGETParams = {
+    /** foreignId */
+    foreignId: number;
+  };
+
   type countUpdatesUsingGETParams = {
     /** uid */
     uid: number;
+  };
+
+  type deleteChildCommentUsingDELETEParams = {
+    /** 要删除的子评论的id */
+    cid: string;
+    /** 要删除的子评论的根评论的id */
+    pid: string;
   };
 
   type deleteEssayByIdUsingDELETEParams = {
@@ -167,6 +235,11 @@ declare namespace API {
   type deletePartitionUsingDELETEParams = {
     /** id */
     id: number;
+  };
+
+  type deleteRootCommentUsingDELETEParams = {
+    /** 要删除的根评论的id */
+    pid: string;
   };
 
   type deleteVideoByIdUsingDELETEParams = {
@@ -210,6 +283,11 @@ declare namespace API {
     pageNum: number;
     /** 每页大小 */
     pageSize: number;
+  };
+
+  type getLikeCountByUidUsingGETParams = {
+    /** uid */
+    uid: number;
   };
 
   type getRecentHistoryUsingGETParams = {
@@ -307,9 +385,69 @@ declare namespace API {
 
   type InputStream = true;
 
+  type likeChildrenCommentUsingPOSTParams = {
+    /** 点赞的子评论id */
+    cid: string;
+    /** 点赞或取消点赞（1：点赞  -1：取消点赞） */
+    flag: number;
+    /** 点赞的对应的根评论id */
+    pid: string;
+    /** 被点赞的评论的用户的id */
+    pUid: number;
+    /** 当前登录用户id */
+    uid: number;
+  };
+
+  type likeRootCommentUsingPOSTParams = {
+    /** 点赞或取消点赞（1：点赞  -1：取消点赞） */
+    flag: number;
+    /** 点赞的根评论的id */
+    pid: string;
+    /** 被点赞的评论的用户的id */
+    pUid: number;
+    /** 当前登录用户id */
+    uid: number;
+  };
+
+  type likeUsingPOSTParams = {
+    /** flag */
+    flag: number;
+    /** updateId */
+    updateId: number;
+  };
+
+  type listChildrenCommentByPagesUsingGETParams = {
+    /** 当前页 */
+    page: number;
+    /** 要获取子评论的根评论id */
+    pid: string;
+    /** 每页大小 */
+    size: number;
+    /** 当前登录用户id */
+    uid: number;
+  };
+
+  type listCommentByPagesUsingGETParams = {
+    /** 要获取评论的动态id */
+    foreignId: number;
+    /** 当前页 */
+    page: number;
+    /** 每页大小 */
+    size: number;
+    /** 排序字段 */
+    sortBy: string;
+    /** 当前登录的用户的id */
+    uid: number;
+  };
+
   type ListResult = {
     list?: Record<string, any>[];
     total?: string;
+  };
+
+  type ListResultCommentVo_ = {
+    list?: CommentVo[];
+    total?: number;
   };
 
   type ListResultUserSearchDoc_ = {
@@ -367,6 +505,11 @@ declare namespace API {
     pin?: string;
     pswd?: string;
     type?: number;
+  };
+
+  type replyCommentUsingPOSTParams = {
+    /** 回复的根评论的id */
+    pid: string;
   };
 
   type Resource = {
@@ -467,6 +610,13 @@ declare namespace API {
     year?: number;
   };
 
+  type toTopCommentUsingPOSTParams = {
+    /** 置顶或取消置顶 */
+    flag: number;
+    /** 要置顶的评论id（只能为根评论） */
+    pid: string;
+  };
+
   type Update = {
     /** 正文 */
     content?: string;
@@ -505,6 +655,7 @@ declare namespace API {
   type UpdateSearchDto = {
     str?: string;
     uid?: number;
+    updateId?: number;
   };
 
   type updateUsingPUTParams = {
@@ -514,7 +665,28 @@ declare namespace API {
     id: number;
   };
 
+  type UpdateVo = {
+    /** 正文 */
+    content?: string;
+    /** 动态id */
+    id?: number;
+    /** 是否已点赞 */
+    isLiked?: boolean;
+    /** 状态码 */
+    status?: number;
+    /** 发布者的用户id */
+    uid?: number;
+    /** 时间 */
+    uploadTime?: string;
+    /** 多媒体urls的json */
+    urls?: string;
+    /** 视频id */
+    vid?: number;
+  };
+
   type User = {
+    /** 头像 */
+    avatar?: string;
     /** 邮箱 */
     email?: string;
     /** uid */
@@ -532,6 +704,8 @@ declare namespace API {
   };
 
   type UserInfo = {
+    /** 头像 */
+    avatar?: string;
     /** 粉丝数量 */
     fan?: number;
     /** 关注数量 */

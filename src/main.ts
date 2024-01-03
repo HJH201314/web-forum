@@ -18,8 +18,13 @@ import 'vue-amazing-ui/css';
 import VueAmazingUI from 'vue-amazing-ui';
 
 const app = createApp(App);
+// 注册icon_park图标
+for (const [key, component] of Object.entries(IconParkIcons)) {
+  app.component(key, component);
+}
+
 app.component('VueDatePicker', VueDatePicker);
-app.use(VueAmazingUI)
+app.use(VueAmazingUI);
 app.use(createPinia());
 app.use(router);
 app.use(VueQueryPlugin);
@@ -28,10 +33,5 @@ app.use(VueQueryPlugin);
 app.directive('shake', {
   updated: shake,
 });
-
-// 注册icon_park图标
-for (const [key, component] of Object.entries(IconParkIcons)) {
-  app.component(key, component);
-}
 
 app.mount('#app');

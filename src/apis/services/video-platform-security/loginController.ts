@@ -30,22 +30,6 @@ export async function logoutUsingGet(options?: { [key: string]: any }) {
   });
 }
 
-/** p1 GET /scy/p1 */
-export async function p1UsingGet(options?: { [key: string]: any }) {
-  return request<API.CommonResultString_>('/scy/p1', {
-    method: 'GET',
-    ...(options || {}),
-  });
-}
-
-/** p6 GET /scy/p6 */
-export async function p6UsingGet(options?: { [key: string]: any }) {
-  return request<API.CommonResultString_>('/scy/p6', {
-    method: 'GET',
-    ...(options || {}),
-  });
-}
-
 /** getPin POST /scy/pin */
 export async function getPinUsingPost(body: API.AuthDto, options?: { [key: string]: any }) {
   return request<API.CommonResultString_>('/scy/pin', {
@@ -61,6 +45,18 @@ export async function getPinUsingPost(body: API.AuthDto, options?: { [key: strin
 /** register POST /scy/register */
 export async function registerUsingPost(body: API.RegisterDto, options?: { [key: string]: any }) {
   return request<API.CommonResultString_>('/scy/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 修改用户信息 POST /scy/update */
+export async function updateUserUsingPost(body: API.User, options?: { [key: string]: any }) {
+  return request<API.CommonResultBoolean_>('/scy/update', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
