@@ -92,7 +92,7 @@ watch(() => props.content, (val) => {
   const str = val;
   const titleRegex = /^\[title:(.*?)]/; // 使用非贪婪模式匹配括号内的内容
   let match = str.match(titleRegex);
-  console.log(match);
+  // console.log(match);
   if (match) {
     contents.title = match[1]; // 提取匹配的内容
     contents.text = contents.text.replace(titleRegex, '');
@@ -100,7 +100,7 @@ watch(() => props.content, (val) => {
   // [video:xxx]
   const videoRegex = /\[video:(.*?)]/g;
   match = str.match(videoRegex);
-  console.log(match);
+  // console.log(match);
   if (match) {
     contents.videos = match.map(m => m.replace(videoRegex, '$1'));
     contents.text = contents.text.replace(videoRegex, '');

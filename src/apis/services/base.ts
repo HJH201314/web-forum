@@ -59,7 +59,7 @@ axiosInstance.interceptors.response.use(
 });
 
 export const request = <TRes>(path: string, args: AxiosRequestConfig) => {
-  console.log(localStorage.getItem("token") ?? "");
+  // console.log(localStorage.getItem("token") ?? "");
   const config: AxiosRequestConfig<any> = {
     url: path,
     ...args,

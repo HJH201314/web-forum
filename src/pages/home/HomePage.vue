@@ -38,7 +38,7 @@ const globe = useGlobal();
     <div style="white-space: nowrap; padding: .5rem; position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 0); display: flex; flex-direction: column; align-items: center; font-size: .75rem;">
       <div>Powered by CusUI</div>
       <a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2021142215号-1</a>
-      <div>© 2016-2023 FCraft. All Rights Reserved. </div>
+      <div>© 2016-2024 FCraft. All Rights Reserved. </div>
     </div>
   </div>
 </template>

@@ -44,7 +44,7 @@ const useUserStore = defineStore('user', () => {
   async function uploadAvatar(file: File) {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await adminApi.userInfoController.uploadFileUsingPost(formData);
+    const res = await adminApi.updatesControllerFix.uploadFileUsingPost(formData);
     if (res.data.code === 200) {
       avatar.value = res.data.data ?? '';
       // 请求更新用户信息
@@ -52,6 +52,7 @@ const useUserStore = defineStore('user', () => {
         avatar: res.data.data,
       });
       if (res2.data.code === 200) {
+        getUserInfo().then();
         return true;
       }
     }

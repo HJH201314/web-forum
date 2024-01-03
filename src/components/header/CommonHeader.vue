@@ -123,6 +123,10 @@ const searchInputRef = ref<HTMLInputElement>();
  * 处理input失焦
  */
 function handleSearchInputBlur() {
+  if (searchStatus.value == 'none') {
+    // 如果已经失去搜索状态，就不用再处理了
+    return;
+  }
   if (searchStatus.value != 'mouseout') {
     // 如果是因为鼠标点击搜索框中其它内容导致的失焦，就要将焦点放回input
     searchInputRef.value?.focus();
@@ -184,21 +188,29 @@ const addSearchHis = (newSearch: string) => {
   }
 };
 
+const clearHistory = () => {
+  localStorage.removeItem("searchHistory");
+  fetchSearchHis();
+};
+
 const searchFromHistory = (SearchHisStr: string) => {
   form.searchVal = SearchHisStr;
   //触发搜索
   handleSearch();
+  searchStatus.value = 'none';
 };
 
-function handleSearch(keyword?: string) {
-  if (keyword && keyword.replace) {
-    keyword = keyword?.replace(/<em>/g, '');
-    keyword = keyword?.replace(/<\/em>/g, '');
-    form.searchVal = keyword;
-  }
+function handleSearch() {
   addSearchHis(form.searchVal);
-  // router.push(`/search?type=video&keyword=${form.searchVal}`)
-  window.open(router.resolve(`/search?type=video&keyword=${form.searchVal}`).href, '_blank');
+  if (router.currentRoute.value.path == '/post') {
+    if (!form.searchVal) router.replace('/post');
+    else router.replace(`/post?keyword=${encodeURIComponent(form.searchVal)}`);
+  } else {
+    if (!form.searchVal) router.replace('/post');
+    else router.push(`/post?keyword=${encodeURIComponent(form.searchVal)}`);
+  }
+  form.searchVal = "";
+  // window.open(router.resolve(`/search?type=video&keyword=${form.searchVal}`).href, '_blank');
 }
 
 const globe = useGlobal();
@@ -230,7 +242,7 @@ const globe = useGlobal();
         <form :class="{ 'focus': searchStatus != 'none' }" @submit.prevent>
           <input ref="searchInputRef" v-model="form.searchVal" type="text" id="nav-search-input" placeholder="搜索"
                  @focus="searchStatus = 'searching'"
-                 @blur="handleSearchInputBlur"
+                 @blur="handleSearchInputBlur" @keydown.enter="handleSearch"
           />
           <Search class="search" size="1.25rem" @click="handleSearch" />
         </form>
@@ -239,7 +251,7 @@ const globe = useGlobal();
             <div v-show="hisIsShow" class="hisBoard">
               <div class="header">
                 <div class="title">搜索历史</div>
-                <div class="clear">清空</div>
+                <div class="clear" @click="clearHistory">清空</div>
               </div>
               <div class="histories">
                 <div @click="searchFromHistory(history)" class="hisDiv" v-for="(history, index) in historyList" :key="index">{{ history }}</div>
@@ -534,7 +546,7 @@ header {
       border-radius: 6px;
     }
     .hisDiv:hover {
-      color: rgb(71, 197, 241);
+      color: $color-primary;
       cursor: pointer;
     }
   }

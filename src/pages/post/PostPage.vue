@@ -2,7 +2,7 @@
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { Instagram, Refresh, VideoOne, VoiceOne } from '@icon-park/vue-next';
+import { Instagram, Refresh, VideoOne, VoiceOne, Left } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import { useRouter } from "vue-router";
@@ -27,11 +27,18 @@ import { convertUserFile } from '@/pages/post/utils/image';
 
 const userStore = useUserStore();
 
+const searchForm = reactive({
+  uid: ref(-1),
+  keyword: ref(''),
+});
+
 const everyDaySentence = ref('每日一句加载中...');
 const dailySentenceLoading = ref(false);
 onMounted(() => {
   loadEverydaySentence();
 });
+
+const router = useRouter();
 
 function loadEverydaySentence() {
   dailySentenceLoading.value = true;
@@ -81,8 +88,6 @@ const publishForm = reactive({
   audios: ref<AudioPickerModel>([]),
 });
 
-const router = useRouter();
-
 const posts = ref<PostItemCardProps[]>([]);
 const currentPage = ref(0); // 首页为1，但是handleLoadMore会先+1，所以初始值为0
 const hasNoMore = ref(false);
@@ -90,7 +95,7 @@ const hasNoMore = ref(false);
 const postResult = ref<API.UpdateVo[]>();
 
 watch(() => postResult.value, async () => {
-  if (!postResult.value) return;
+  if (!postResult.value?.length) return;
   for (let item of postResult.value) {
     if (item.vid) continue; // 此处不处理视频
     const userInfo = await getUserInfo(item.uid ?? -1);
@@ -156,11 +161,12 @@ watch(() => userStore.userInfo?.id, async (newVal) => {
 
 async function getPosts() {
   try {
-    const res = await adminApi.updatesController.getInPageUsingGet({
+    const res = await adminApi.updatesController.getInPageUsingPost({
       pageNum: currentPage.value,
       pageSize: 10,
     }, {
-
+      uid: searchForm.uid == -1 ? undefined : searchForm.uid,
+      str: searchForm.keyword ? searchForm.keyword : undefined,
     });
     if (res.data.data?.length == 0) {
       showToast({ type: 'info', text: '没有更多啦' });
@@ -345,7 +351,23 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
   }
 }, {
   threshold: 0,
+  immediate: false,
 });
+
+/* 使用query进行搜索 */
+watch(() => router.currentRoute.value, (newVal) => {
+  if (newVal) {
+    if (newVal.query?.keyword) searchForm.keyword = newVal.query.keyword as string;
+    else searchForm.keyword = '';
+    if (newVal.query?.uid) searchForm.uid = parseInt(newVal.query.uid as string);
+    else searchForm.uid = -1;
+    posts.value = [];
+    hasNoMore.value = false;
+    currentPage.value = 0;
+    observeLoadMore.pause();
+    observeLoadMore.resume();
+  }
+}, { immediate: true });
 
 /* 小屏适配 */
 const globe = useGlobal();
@@ -380,7 +402,7 @@ const globe = useGlobal();
         <div ref="copyrightRef" style="padding: .5rem; margin-top: auto; display: flex; flex-direction: column; align-items: center; font-size: .75rem;">
           <div>Powered by CusUI</div>
           <a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2021142215号-1</a>
-          <div>© 2016-2023 FCraft. All Rights Reserved. </div>
+          <div>© 2016-2024 FCraft. All Rights Reserved. </div>
         </div>
       </aside>
       <main class="post-center">
@@ -428,6 +450,11 @@ const globe = useGlobal();
           </div>
         </section>
         <section class="post-center-posts">
+          <div v-if="searchForm.keyword" class="load-more">
+            <span @click="router.replace('/post')"><Left />{{ '返回' }}</span>
+            <div style="flex: 1;"></div>
+            <span>“{{ searchForm.keyword }}” 的搜索结果（共{{ posts.length }}个）</span>
+          </div>
           <PostItemCard class="post-item" v-for="item in posts" :key="item.postId"
                         :type="item.type ?? 'post'"
                         :post-id="item.postId!"
@@ -444,6 +471,7 @@ const globe = useGlobal();
                         @delete-post="(id) => handlePostDeleted(id)"
           />
 <!--          <div class="post-loading" v-if="postQueryStatus == 'pending'">加载中...</div>-->
+          <div class="load-more" v-if="hasNoMore && !posts.length" @click="router.replace('/post')">这里空空如也，不如点我返回首页吧ㄟ( ▔, ▔ )ㄏ</div>
           <div ref="loadMoreRef" class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
         </section>
       </main>

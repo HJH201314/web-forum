@@ -152,14 +152,14 @@ export async function getEssayByIdUsingGet(
 }
 
 /** 分页获取图文动态 GET /updates/inPage */
-export async function getInPageUsingGet(
+export async function getInPageUsingPost(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getInPageUsingGETParams,
   body: API.UpdateSearchDto,
   options?: { [key: string]: any },
 ) {
   return request<API.CommonResultListUpdateVo_>('/updates/inPage', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
