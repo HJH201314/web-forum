@@ -15,6 +15,7 @@ import variables from "@/assets/variables.module.scss";
 import { DialogManager } from "@/components/dialog";
 import useGlobal from '@/commands/useGlobal';
 import useUserInfo, { getUserInfo } from '@/stores/publicUserInfo';
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const props = withDefaults(defineProps<{
   postId: number; // 动态id
@@ -95,7 +96,7 @@ watchEffect(async () => {
     comments.value.push({
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: userInfo.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
+      userAvatar: convertUserFile(userInfo.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       targetUsername: item.targetUsername,
@@ -120,7 +121,7 @@ async function convertCommentVOToCommentItem(item: API.Comment, type: 'sub'): Pr
     return {
       id: item.id ?? '',
       userId: item.userId!,
-      userAvatar: userInfo.avatar ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
+      userAvatar: convertUserFile(userInfo.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.userId}`,
       userName: item.username ?? '未知用户',
       userLevel: 1,
       content: item.content ?? '',
@@ -162,15 +163,17 @@ async function getSubComments(comment: CommentItem) {
       uid: userStore.userInfo.id ?? -1,
     });
     if (res.data.code == 200) {
-      comments.value.forEach((item, index) => {
+      for (const item of comments.value) {
+        const index = comments.value.indexOf(item);
         if (item.id == comment.id) {
           // 将获取到的列表转换为展示的列表
           comments.value[index].totalSubCommentCnt = res.data.data?.total;
-          comments.value[index].subComments = res.data.data?.list?.map((item) => {
-            return convertCommentVOToCommentItem(item, 'sub');
-          }) ?? [];
+          comments.value[index].subComments = [];
+          for (const subItem of res.data.data?.list ?? []) {
+            comments.value[index].subComments.push(await convertCommentVOToCommentItem(subItem, 'sub'));
+          }
         }
-      });
+      }
     }
   } catch (e) {
     // ignore

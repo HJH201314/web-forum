@@ -15,6 +15,7 @@ import useLikeCacheStore from '@/stores/useLikeCacheStore';
 import { getLighterColor } from '@/utils/color';
 import useGlobal from '@/commands/useGlobal';
 import ToastManager from '@/components/toast/ToastManager';
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const props = withDefaults(defineProps<{
   postId?: string;
@@ -108,7 +109,7 @@ const globe = useGlobal();
         :post-id="pid"
         :user-id="post.uid"
         :user-name="userInfo.userInfo.value?.name"
-        :avatar="getDefaultAvatarByUid(post.uid)"
+        :avatar="convertUserFile(userInfo.userInfo.value?.avatar) ?? getDefaultAvatarByUid(post.uid)"
         :content="post.content"
         :create-time="post.uploadTime"
         :images="post.images"
