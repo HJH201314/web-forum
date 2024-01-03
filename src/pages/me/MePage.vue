@@ -30,71 +30,71 @@ const address = ref([
         children: [
           {
             value: '111',
-            label: '东城区'
+            label: '东城区',
           },
           {
             value: '112',
-            label: '西城区'
+            label: '西城区',
           },
           {
             value: '113',
-            label: '朝阳区'
+            label: '朝阳区',
           },
           {
             value: '114',
-            label: '丰台区'
+            label: '丰台区',
           },
           {
             value: '115',
-            label: '石景山区'
+            label: '石景山区',
           },
           {
             value: '116',
-            label: '海淀区'
+            label: '海淀区',
           },
           {
             value: '117',
-            label: '门头沟区'
+            label: '门头沟区',
           },
           {
             value: '118',
-            label: '房山区'
+            label: '房山区',
           },
           {
             value: '119',
-            label: '通州区'
+            label: '通州区',
           },
           {
             value: '120',
-            label: '顺义区'
+            label: '顺义区',
           },
           {
             value: '121',
-            label: '昌平区'
+            label: '昌平区',
           },
           {
             value: '122',
-            label: '大兴区'
+            label: '大兴区',
           },
           {
             value: '123',
-            label: '怀柔区'
+            label: '怀柔区',
           },
           {
             value: '124',
-            label: '平谷区'
+            label: '平谷区',
           },
           {
             value: '125',
-            label: '密云区'
+            label: '密云区',
           },
           {
             value: '126',
-            label: '延庆区'
-          }
-        ]
-      }
-    ]
+            label: '延庆区',
+          },
+        ],
+      },
+    ],
   },
   {
     value: '2',
@@ -106,37 +106,37 @@ const address = ref([
         children: [
           {
             value: '211',
-            label: '西湖区'
+            label: '西湖区',
           },
           {
             value: '212',
-            label: '余杭区'
+            label: '余杭区',
           },
           {
             value: '213',
-            label: '拱墅区'
+            label: '拱墅区',
           },
           {
             value: '214',
-            label: '富阳区'
+            label: '富阳区',
           },
           {
             value: '215',
-            label: '临安区'
+            label: '临安区',
           },
           {
             value: '216',
-            label: '桐庐县'
+            label: '桐庐县',
           },
           {
             value: '217',
-            label: '淳安县'
+            label: '淳安县',
           },
           {
             value: '218',
-            label: '建德市'
-          }
-        ]
+            label: '建德市',
+          },
+        ],
       },
       {
         value: '22',
@@ -144,27 +144,27 @@ const address = ref([
         children: [
           {
             value: '221',
-            label: '吴兴区'
+            label: '吴兴区',
           },
           {
             value: '222',
-            label: '安吉区'
+            label: '安吉区',
           },
           {
             value: '223',
-            label: '南浔区'
+            label: '南浔区',
           },
           {
             value: '224',
-            label: '德清县'
+            label: '德清县',
           },
           {
             value: '225',
-            label: '长兴县'
-          }
-        ]
+            label: '长兴县',
+          },
+        ],
       },
-    ]
+    ],
   },
   {
     value: '3',
@@ -176,13 +176,13 @@ const address = ref([
         children: [
           {
             value: '311',
-            label: '越秀区'
+            label: '越秀区',
           },
           {
             value: '312',
-            label: '天河区'
-          }
-        ]
+            label: '天河区',
+          },
+        ],
       },
       {
         value: '32',
@@ -190,41 +190,41 @@ const address = ref([
         children: [
           {
             value: '321',
-            label: '罗湖区'
+            label: '罗湖区',
           },
           {
             value: '322',
-            label: '福田区'
+            label: '福田区',
           },
           {
             value: '323',
-            label: '南山区'
+            label: '南山区',
           },
           {
             value: '324',
-            label: '宝安区'
+            label: '宝安区',
           },
           {
             value: '325',
-            label: '龙岗区'
+            label: '龙岗区',
           },
           {
             value: '326',
-            label: '盐田区'
+            label: '盐田区',
           },
           {
             value: '327',
-            label: '龙华区'
+            label: '龙华区',
           },
           {
             value: '328',
-            label: '坪山区'
+            label: '坪山区',
           },
           {
             value: '329',
-            label: '光明区'
-          }
-        ]
+            label: '光明区',
+          },
+        ],
       },
       {
         value: '33',
@@ -232,31 +232,31 @@ const address = ref([
         children: [
           {
             value: '331',
-            label: '香洲区'
+            label: '香洲区',
           },
           {
             value: '332',
-            label: '斗门区'
+            label: '斗门区',
           },
           {
             value: '333',
-            label: '金湾区'
+            label: '金湾区',
           },
           {
             value: '334',
-            label: '横琴新区'
+            label: '横琴新区',
           },
           {
             value: '335',
-            label: '高栏港经济区'
+            label: '高栏港经济区',
           },
           {
             value: '336',
-            label: '珠海保税区'
-          }
-        ]
-      }
-    ]
+            label: '珠海保税区',
+          },
+        ],
+      },
+    ],
   },
   {
     value: '4',
@@ -268,57 +268,57 @@ const address = ref([
         children: [
           {
             value: '411',
-            label: '鼓楼区'
+            label: '鼓楼区',
           },
           {
             value: '412',
-            label: '台江区'
+            label: '台江区',
           },
           {
             value: '413',
-            label: '仓山区'
+            label: '仓山区',
           },
           {
             value: '414',
-            label: '马尾区'
+            label: '马尾区',
           },
           {
             value: '415',
-            label: '晋安区'
+            label: '晋安区',
           },
           {
             value: '416',
-            label: '长乐区'
+            label: '长乐区',
           },
           {
             value: '417',
-            label: '福清市'
+            label: '福清市',
           },
           {
             value: '418',
-            label: '闽侯县'
+            label: '闽侯县',
           },
           {
             value: '419',
-            label: '连江县'
+            label: '连江县',
           },
           {
             value: '420',
-            label: '罗源县'
+            label: '罗源县',
           },
           {
             value: '421',
-            label: '闽清县'
+            label: '闽清县',
           },
           {
             value: '422',
-            label: '永泰县'
+            label: '永泰县',
           },
           {
             value: '423',
-            label: '平潭县'
-          }
-        ]
+            label: '平潭县',
+          },
+        ],
       },
       {
         value: '42',
@@ -326,29 +326,29 @@ const address = ref([
         children: [
           {
             value: '421',
-            label: '思明区'
+            label: '思明区',
           },
           {
             value: '422',
-            label: '海沧区'
+            label: '海沧区',
           },
           {
             value: '423',
-            label: '湖里区'
+            label: '湖里区',
           },
           {
             value: '424',
-            label: '集美区'
+            label: '集美区',
           },
           {
             value: '425',
-            label: '同安区'
+            label: '同安区',
           },
           {
             value: '426',
-            label: '翔安区'
-          }
-        ]
+            label: '翔安区',
+          },
+        ],
       },
       {
         value: '43',
@@ -356,28 +356,28 @@ const address = ref([
         children: [
           {
             value: '431',
-            label: '城厢区'
+            label: '城厢区',
           },
           {
             value: '432',
-            label: '涵江区'
+            label: '涵江区',
           },
           {
             value: '433',
-            label: '荔城区'
+            label: '荔城区',
           },
           {
             value: '434',
-            label: '秀屿区'
+            label: '秀屿区',
           },
           {
             value: '435',
-            label: '仙游县'
-          }
-        ]
-      }
-    ]
-  }
+            label: '仙游县',
+          },
+        ],
+      },
+    ],
+  },
 ]);
 const selectedAddress = ref(['3', '32', '323']);
 
@@ -484,7 +484,7 @@ function changeAvatar() {
 
 // 保存修改
 function save() {
-  
+
 }
 </script>
 
