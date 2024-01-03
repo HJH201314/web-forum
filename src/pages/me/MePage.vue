@@ -9,6 +9,7 @@ import CusInput from '@/components/input/CusInput.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { useRouter } from 'vue-router';
+import useGlobal from '@/commands/useGlobal';
 
 const router = useRouter();
 onMounted(() => {
@@ -195,7 +196,13 @@ let nickname = ref(''); // 昵称
 const birthday = ref('');
 // 校验新密码
 watch(() => newPwd.value, (newValue) => {
-  if (newValue.length < 6 || newValue.length > 30) {
+  if (newValue.length === 0) {
+    newPwdTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    let element = document.getElementById('newPwdTip');
+    if (element) {
+      element.style.color = '#9E9E9EFF';
+    }
+  } else if (newValue.length < 6 || newValue.length > 30) {
     newPwdTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
     let element = document.getElementById('newPwdTip');
     if (element) {
@@ -208,11 +215,33 @@ watch(() => newPwd.value, (newValue) => {
       element.style.color = '#9E9E9EFF';
     }
   }
+  
+  // 匹配一致后修改newPwd
+  if (newValue !== confirmPwd.value) {
+    confirmTip.value = '两次密码不一致，请重新输入。';
+    let element = document.getElementById('confirmTip');
+    if (element) {
+      element.style.color = 'red';
+    }
+  } else {
+    confirmTip.value = '密码一致。';
+    confirmed.value = true;
+    let element = document.getElementById('confirmTip');
+    if (element) {
+      element.style.color = '#9E9E9EFF';
+    }
+  }
 });
 
 // 实时匹配密码
 watch(() => confirmPwd.value, (newValue) => {
-  if (newValue !== newPwd.value) {
+  if (newValue.length === 0) {
+    confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    let element = document.getElementById('confirmTip');
+    if (element) {
+      element.style.color = '#9E9E9EFF';
+    }
+  } else if (newValue !== newPwd.value) {
     confirmTip.value = '两次密码不一致，请重新输入。';
     let element = document.getElementById('confirmTip');
     if (element) {
@@ -269,11 +298,6 @@ function edit() {
   }
 }
 
-// 提交修改的表单
-function submitForm() {
-
-}
-
 // todo 删除帖子
 function handlePostDeleted(id: number) {
   posts.value.forEach((item, index) => {
@@ -326,21 +350,24 @@ function save() {
       signature: signature.value,
     }];
   userStore.userInfo.name = nickname.value;
-  
   let infoString = JSON.stringify(infoArray);
   localStorage.setItem('info', infoString);
   window.location.reload();
 }
 
+// 重置修改
 function reset() {
   window.location.reload();
 }
+
+
+const globe = useGlobal(); // 小屏适配
 </script>
 
 <template>
   <div class = "me">
     <div class = "me-container">
-      <aside class = "me-left">
+      <aside v-if = "globe.isLargeScreen" class = "me-left">
         <section v-if = "userStore.isLogin" ref = "meLeftUserRef" class = "me-left-user">
           <div>
             <div class = "avatar"><img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
@@ -386,7 +413,7 @@ function reset() {
       </main>
       <main v-if = "editing" id = "me-edit" class = "me-main">
         <section class = "me-main-edit">
-          <form class = "me-main-edit-form" @submit.prevent = "submitForm">
+          <form class = "me-main-edit-form">
             <div class = "me-main-edit-form-avatar">
               <img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
               <input id = "change-avatar" accept = ".jpeg, .jpg, .png" style = "display: none" type = "file">
@@ -401,11 +428,11 @@ function reset() {
             </div>
             <div class = "me-main-edit-form-bar">
               <div class = "nickname">
-                <label for = "nickname">昵称</label>
+                <span>昵称</span>
                 <CusInput id = "nickname" v-model = "nickname" :placeholder = "nickname" type = "text"></CusInput>
               </div>
               <div class = "gender">
-                <label for = "gender">性别</label>
+                <span>性别</span>
                 <div class = "gender-item">
                   <div class = "male">
                     <CusButton id = "gender" :background-color = "maleColor" name = "male" type = "normal"
@@ -431,13 +458,12 @@ function reset() {
                       女
                     </CusButton>
                   </div>
-                
                 </div>
               </div>
             </div>
             <div class = "me-main-edit-form-bar">
               <div class = "birthday">
-                <label for = "birthday">生日</label>
+                <span>生日</span>
                 <VueDatePicker v-model = "birthday"
                                :max-date = "new Date()"
                                :placeholder = "birthday"
@@ -446,7 +472,7 @@ function reset() {
                 />
               </div>
               <div class = "address">
-                <label for = "address">现居地</label>
+                <span>现居地</span>
                 <div class = "options">
                   <Cascader v-model:selected-value = "selectedAddress" :options = "address"></Cascader>
                 </div>
@@ -454,7 +480,7 @@ function reset() {
             </div>
             <div class = "me-main-edit-form-bar">
               <div class = "signature">
-                <label for = "signature">个性签名</label>
+                <span>个性签名</span>
                 <textarea id = "signature" v-model = "signature"
                           class = "textarea" placeholder = "这个人很懒，什么都没留下..."></textarea>
                 <span>{{ signatureLen }}/200</span>
@@ -463,11 +489,11 @@ function reset() {
             <div class = "me-main-edit-form-bar">
               <div class = "password">
                 <span class = "title">修改密码</span>
-                <label for = "password">新密码</label>
+                <span>新密码</span>
                 <CusInput id = "newPwd" v-model = "newPwd" :input-attrs = "{type: 'password'}"
                           placeholder = "请输入新密码"></CusInput>
                 <span id = "newPwdTip" class = "tips">{{ newPwdTip }}</span>
-                <label for = "confirmPwd">确认密码</label>
+                <span>确认密码</span>
                 <CusInput id = "password" v-model = "confirmPwd" :input-attrs = "{type: 'password'}"
                           placeholder = "请再次输入密码"></CusInput>
                 <span id = "confirmTip" class = "tips">{{ confirmTip }}</span>
