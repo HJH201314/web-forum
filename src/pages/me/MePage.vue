@@ -48,70 +48,22 @@ const address = ref([
         value: '11',
         label: '北京市',
         children: [
-          {
-            value: '111',
-            label: '东城区',
-          },
-          {
-            value: '112',
-            label: '西城区',
-          },
-          {
-            value: '113',
-            label: '朝阳区',
-          },
-          {
-            value: '114',
-            label: '丰台区',
-          },
-          {
-            value: '115',
-            label: '石景山区',
-          },
-          {
-            value: '116',
-            label: '海淀区',
-          },
-          {
-            value: '117',
-            label: '门头沟区',
-          },
-          {
-            value: '118',
-            label: '房山区',
-          },
-          {
-            value: '119',
-            label: '通州区',
-          },
-          {
-            value: '120',
-            label: '顺义区',
-          },
-          {
-            value: '121',
-            label: '昌平区',
-          },
-          {
-            value: '122',
-            label: '大兴区',
-          },
-          {
-            value: '123',
-            label: '怀柔区',
-          },
-          {
-            value: '124',
-            label: '平谷区',
-          },
-          {
-            value: '125',
-            label: '密云区',
-          },
-          {
-            value: '126',
-            label: '延庆区',
-          },
+          { value: '111', label: '东城区' },
+          { value: '112', label: '西城区' },
+          { value: '113', label: '朝阳区' },
+          { value: '114', label: '丰台区' },
+          { value: '115', label: '石景山区' },
+          { value: '116', label: '海淀区' },
+          { value: '117', label: '门头沟区' },
+          { value: '118', label: '房山区' },
+          { value: '119', label: '通州区' },
+          { value: '120', label: '顺义区' },
+          { value: '121', label: '昌平区' },
+          { value: '122', label: '大兴区' },
+          { value: '123', label: '怀柔区' },
+          { value: '124', label: '平谷区' },
+          { value: '125', label: '密云区' },
+          { value: '126', label: '延庆区' },
         ],
       },
     ],
@@ -121,67 +73,26 @@ const address = ref([
     label: '浙江省',
     children: [
       {
-        value: '21',
-        label: '杭州市',
+        value: '21', label: '杭州市',
         children: [
-          {
-            value: '211',
-            label: '西湖区',
-          },
-          {
-            value: '212',
-            label: '余杭区',
-          },
-          {
-            value: '213',
-            label: '拱墅区',
-          },
-          {
-            value: '214',
-            label: '富阳区',
-          },
-          {
-            value: '215',
-            label: '临安区',
-          },
-          {
-            value: '216',
-            label: '桐庐县',
-          },
-          {
-            value: '217',
-            label: '淳安县',
-          },
-          {
-            value: '218',
-            label: '建德市',
-          },
+          { value: '211', label: '西湖区' },
+          { value: '212', label: '余杭区' },
+          { value: '213', label: '拱墅区' },
+          { value: '214', label: '富阳区' },
+          { value: '215', label: '临安区' },
+          { value: '216', label: '桐庐县' },
+          { value: '217', label: '淳安县' },
+          { value: '218', label: '建德市' },
         ],
       },
       {
-        value: '22',
-        label: '湖州市',
+        value: '22', label: '湖州市',
         children: [
-          {
-            value: '221',
-            label: '吴兴区',
-          },
-          {
-            value: '222',
-            label: '安吉区',
-          },
-          {
-            value: '223',
-            label: '南浔区',
-          },
-          {
-            value: '224',
-            label: '德清县',
-          },
-          {
-            value: '225',
-            label: '长兴县',
-          },
+          { value: '221', label: '吴兴区' },
+          { value: '222', label: '安吉区' },
+          { value: '223', label: '南浔区' },
+          { value: '224', label: '德清县' },
+          { value: '225', label: '长兴县' },
         ],
       },
     ],
@@ -194,86 +105,35 @@ const address = ref([
         value: '31',
         label: '广州市',
         children: [
-          {
-            value: '311',
-            label: '越秀区',
-          },
-          {
-            value: '312',
-            label: '天河区',
-          },
+          { value: '311', label: '越秀区' },
+          { value: '312', label: '天河区' },
         ],
       },
       {
         value: '32',
         label: '深圳市',
         children: [
-          {
-            value: '321',
-            label: '罗湖区',
-          },
-          {
-            value: '322',
-            label: '福田区',
-          },
-          {
-            value: '323',
-            label: '南山区',
-          },
-          {
-            value: '324',
-            label: '宝安区',
-          },
-          {
-            value: '325',
-            label: '龙岗区',
-          },
-          {
-            value: '326',
-            label: '盐田区',
-          },
-          {
-            value: '327',
-            label: '龙华区',
-          },
-          {
-            value: '328',
-            label: '坪山区',
-          },
-          {
-            value: '329',
-            label: '光明区',
-          },
+          { value: '321', label: '罗湖区' },
+          { value: '322', label: '福田区' },
+          { value: '323', label: '南山区' },
+          { value: '324', label: '宝安区' },
+          { value: '325', label: '龙岗区' },
+          { value: '326', label: '盐田区' },
+          { value: '327', label: '龙华区' },
+          { value: '328', label: '坪山区' },
+          { value: '329', label: '光明区' },
         ],
       },
       {
         value: '33',
         label: '珠海市',
         children: [
-          {
-            value: '331',
-            label: '香洲区',
-          },
-          {
-            value: '332',
-            label: '斗门区',
-          },
-          {
-            value: '333',
-            label: '金湾区',
-          },
-          {
-            value: '334',
-            label: '横琴新区',
-          },
-          {
-            value: '335',
-            label: '高栏港经济区',
-          },
-          {
-            value: '336',
-            label: '珠海保税区',
-          },
+          { value: '331', label: '香洲区' },
+          { value: '332', label: '斗门区' },
+          { value: '333', label: '金湾区' },
+          { value: '334', label: '横琴新区' },
+          { value: '335', label: '高栏港经济区' },
+          { value: '336', label: '珠海保税区' },
         ],
       },
     ],
@@ -283,117 +143,37 @@ const address = ref([
     label: '福建省',
     children: [
       {
-        value: '41',
-        label: '福州市',
+        value: '41', label: '福州市',
         children: [
-          {
-            value: '411',
-            label: '鼓楼区',
-          },
-          {
-            value: '412',
-            label: '台江区',
-          },
-          {
-            value: '413',
-            label: '仓山区',
-          },
-          {
-            value: '414',
-            label: '马尾区',
-          },
-          {
-            value: '415',
-            label: '晋安区',
-          },
-          {
-            value: '416',
-            label: '长乐区',
-          },
-          {
-            value: '417',
-            label: '福清市',
-          },
-          {
-            value: '418',
-            label: '闽侯县',
-          },
-          {
-            value: '419',
-            label: '连江县',
-          },
-          {
-            value: '420',
-            label: '罗源县',
-          },
-          {
-            value: '421',
-            label: '闽清县',
-          },
-          {
-            value: '422',
-            label: '永泰县',
-          },
-          {
-            value: '423',
-            label: '平潭县',
-          },
+          { value: '411', label: '鼓楼区' },
+          { value: '412', label: '台江区' },
+          { value: '413', label: '仓山区' },
+          { value: '414', label: '马尾区' },
+          { value: '415', label: '晋安区' },
+          { value: '416', label: '长乐区' },
+          { value: '417', label: '福清市' },
+          { value: '418', label: '闽侯县' },
+          { value: '419', label: '连江县' },
+          { value: '420', label: '罗源县' },
         ],
       },
       {
-        value: '42',
-        label: '厦门市',
+        value: '42', label: '厦门市',
         children: [
-          {
-            value: '421',
-            label: '思明区',
-          },
-          {
-            value: '422',
-            label: '海沧区',
-          },
-          {
-            value: '423',
-            label: '湖里区',
-          },
-          {
-            value: '424',
-            label: '集美区',
-          },
-          {
-            value: '425',
-            label: '同安区',
-          },
-          {
-            value: '426',
-            label: '翔安区',
-          },
+          { value: '421', label: '思明区' },
+          { value: '422', label: '海沧区' },
+          { value: '423', label: '湖里区' },
         ],
       },
       {
         value: '43',
         label: '莆田市',
         children: [
-          {
-            value: '431',
-            label: '城厢区',
-          },
-          {
-            value: '432',
-            label: '涵江区',
-          },
-          {
-            value: '433',
-            label: '荔城区',
-          },
-          {
-            value: '434',
-            label: '秀屿区',
-          },
-          {
-            value: '435',
-            label: '仙游县',
-          },
+          { value: '431', label: '城厢区' },
+          { value: '432', label: '涵江区' },
+          { value: '433', label: '荔城区' },
+          { value: '434', label: '秀屿区' },
+          { value: '435', label: '仙游县' },
         ],
       },
     ],
@@ -405,6 +185,7 @@ const newPwd = ref('');
 const confirmPwd = ref('');
 const newPwdTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
 const confirmTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
+const confirmed = ref(false); // 是否确认密码
 
 const infoString = ref(localStorage.getItem('info'));
 let gender = ref(''); // 性别
@@ -439,6 +220,7 @@ watch(() => confirmPwd.value, (newValue) => {
     }
   } else {
     confirmTip.value = '密码一致。';
+    confirmed.value = true;
     let element = document.getElementById('confirmTip');
     if (element) {
       element.style.color = '#9E9E9EFF';
@@ -472,24 +254,17 @@ function choseFemale() {
 function edit() {
   editing.value = true;
   if (infoString.value) {
-    console.log('load');
     let infoArray = JSON.parse(infoString.value);
-    console.log(infoArray);
     // avatar.value = infoArray.find('avatar')?.avatar;
     nickname.value = infoArray.find(item => 'nickname' in item)?.nickname;
     gender.value = infoArray.find(item => 'gender' in item)?.gender;
-    console.log(gender.value);
     if (gender.value == 'male') {
-      // choseMale();
-      console.log('male');
       maleColor.value = '#adb7ff';
-    }
-    else {
-      choseFemale();
+    } else {
       femaleColor.value = '#efcaff';
     }
     birthday.value = infoArray.find(item => 'birthday' in item)?.birthday;
-    selectedAddress.value = infoArray.find(item =>'selectedAddress' in item)?.selectedAddress;
+    selectedAddress.value = infoArray.find(item => 'selectedAddress' in item)?.selectedAddress;
     signature.value = infoArray.find(item => 'signature' in item)?.signature;
   }
 }
@@ -518,9 +293,13 @@ function changeAvatar() {
   let element = document.getElementById('change-avatar');
   if (element) {
     element.click();
-    document.getElementById('change-avatar')?.addEventListener('change', (e) => {
+    document.getElementById('change-avatar')?.addEventListener('change', async (e) => {
       let file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
+        console.log('upload avatar');
+        console.log(file);
+        let res = await userStore.uploadAvatar(file);
+        console.log(res);
         let reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (e) => {
@@ -538,7 +317,6 @@ function changeAvatar() {
 
 // 保存修改
 function save() {
-  console.log(nickname.value);
   let infoArray = [
     {
       nickname: nickname.value,
@@ -547,11 +325,15 @@ function save() {
       selectedAddress: selectedAddress.value,
       signature: signature.value,
     }];
+  userStore.userInfo.name = nickname.value;
+  
   let infoString = JSON.stringify(infoArray);
   localStorage.setItem('info', infoString);
   window.location.reload();
-  console.log('save');
-  console.log(infoArray);
+}
+
+function reset() {
+  window.location.reload();
 }
 </script>
 
@@ -620,7 +402,7 @@ function save() {
             <div class = "me-main-edit-form-bar">
               <div class = "nickname">
                 <label for = "nickname">昵称</label>
-                <CusInput id = "nickname" v-model="nickname" :placeholder = "nickname" type = "text"></CusInput>
+                <CusInput id = "nickname" v-model = "nickname" :placeholder = "nickname" type = "text"></CusInput>
               </div>
               <div class = "gender">
                 <label for = "gender">性别</label>
@@ -693,6 +475,7 @@ function save() {
             </div>
             <div class = "me-main-edit-form-bar">
               <CusButton text = "保存" type = "success" @click = "save"></CusButton>
+              <CusButton text = "取消" type = "danger" @click = "reset"></CusButton>
             </div>
           </form>
         </section>
