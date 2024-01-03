@@ -16,7 +16,6 @@ const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
 let signature = ref(''); // 个性签名
 let signatureLen = ref(signature.value.length); // 个性签名长度
-let date = ref(new Date().toLocaleDateString()).value.replace('/', '-').replace('/', '-'); // 生日
 const maleColor = ref('#F5F5F5FF'); // 性别颜色
 const femaleColor = ref('#F5F5F5FF'); // 性别颜色
 const address = ref([
@@ -635,9 +634,9 @@ function save() {
             <div class = "me-main-edit-form-bar">
               <div class = "birthday">
                 <label for = "birthday">生日</label>
-                <VueDatePicker v-model = "date"
+                <VueDatePicker v-model = "birthday"
                                :max-date = "new Date()"
-                               :placeholder = "date"
+                               :placeholder = "birthday"
                                format = "yyyy-MM-dd"
                                model-type = "format"
                 />
