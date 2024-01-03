@@ -31,6 +31,11 @@ const router = createRouter({
       component: MePage,
     },
     {
+      path: '/me/edit',
+      name: 'me-edit',
+      component: MePage,
+    },
+    {
       path: '/login',
       name: 'login',
       component: LoginPage,
