@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
-import { computed, reactive, ref, watch } from 'vue';
-import { Instagram, Topic, SettingOne, VideoOne, VoiceOne } from '@icon-park/vue-next';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { Instagram, Refresh, VideoOne, VoiceOne } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import { useRouter } from "vue-router";
@@ -26,6 +26,33 @@ import { DialogManager } from '@/components/dialog';
 import { convertUserFile } from '@/pages/post/utils/image';
 
 const userStore = useUserStore();
+
+const everyDaySentence = ref('每日一句加载中...');
+const dailySentenceLoading = ref(false);
+onMounted(() => {
+  loadEverydaySentence();
+});
+
+function loadEverydaySentence() {
+  dailySentenceLoading.value = true;
+  fetch('https://v1.hitokoto.cn?encode=text')
+    .then(res => res.text())
+    .then(data => {
+      everyDaySentence.value = data;
+      dailySentenceLoading.value = false;
+    });
+}
+
+/* 计算版权信息的位置 */
+const detectRef = ref<HTMLDivElement>();
+const copyrightRef = ref<HTMLDivElement>();
+watch(() => detectRef.value, (newVal) => {
+  if (!newVal) return;
+  const marginTop = newVal.getBoundingClientRect().top;
+  if (!copyrightRef.value) return;
+  copyrightRef.value.style.marginTop
+    = `calc(${Math.max(0, window.innerHeight - marginTop)}px - 2.25rem - 3.5rem)`;
+}, { immediate: true });
 
 /* 图片选择组件实例 */
 const imagePickerRef = ref<ImagePickerFunc>();
@@ -340,8 +367,21 @@ const globe = useGlobal();
           </div>
         </section>
         <section class="post-left-live">
-          板块
+          <div class="top">
+            <span>每日一句</span>
+            <CusButton style="margin-left: auto;" @click="loadEverydaySentence" :disabled="dailySentenceLoading"><span class="refresh"><Refresh />刷新</span></CusButton>
+          </div>
+          <hr style="margin-top: .25rem; margin-bottom: .25rem;"/>
+          <div class="post-left-live-item">
+            {{ everyDaySentence }}
+          </div>
         </section>
+        <div ref="detectRef"></div>
+        <div ref="copyrightRef" style="padding: .5rem; margin-top: auto; display: flex; flex-direction: column; align-items: center; font-size: .75rem;">
+          <div>Powered by CusUI</div>
+          <a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2021142215号-1</a>
+          <div>© 2016-2023 FCraft. All Rights Reserved. </div>
+        </div>
       </aside>
       <main class="post-center">
         <section v-if="userStore.isLogin" class="post-center-publish">
@@ -522,6 +562,17 @@ const globe = useGlobal();
     }
     &-live {
       @extend %card;
+
+      .top {
+        display: flex;
+        align-items: center;
+      }
+
+      .refresh {
+        margin-left: auto;
+        font-size: .8rem;
+        color: $color-primary;
+      }
     }
   }
 

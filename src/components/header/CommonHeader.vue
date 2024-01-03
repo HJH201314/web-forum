@@ -370,7 +370,7 @@ header {
     flex: 1;
     margin: 0 auto; // 居中
     height: 2.5rem;
-    min-width: 180px;
+    min-width: 100px;
     max-width: 500px;
     position: relative;
     border-radius: .5rem;
@@ -450,7 +450,7 @@ header {
 .nav-user {
   &-container {
     height: 100%;
-    padding: 1rem;
+    margin-right: .5rem;
     cursor: pointer;
     box-sizing: border-box;
   }
@@ -518,7 +518,7 @@ header {
     }
 
     .clear:hover {
-      color: rgb(71, 197, 241);
+      color: $color-primary;
     }
   }
 

@@ -479,7 +479,7 @@ const globe = useGlobal();
 <template>
   <div class="comment-view" :class="{'small': globe.isSmallScreen}">
     <div class="header">
-      <span class="title">评论</span>
+      <span class="title" :class="{'small': globe.isSmallScreen}">评论</span>
       <span class="count">{{ commentCount }}</span>
       <span class="sort-hot" :class="{'active': sortMode == 'hot'}" @click="changeSortMode('hot')">最热</span>
       <span>|</span>
@@ -614,6 +614,9 @@ const globe = useGlobal();
       font-size: 1.5rem;
       color: $color-black-lighter;
       margin-left: 1rem;
+      &.small {
+        margin-left: .5rem;
+      }
     }
     > .count {
       margin-left: 1rem;
@@ -685,7 +688,7 @@ const globe = useGlobal();
     margin-left: 1.75rem;
 
     &.small {
-      margin-left: 1rem;
+      margin-left: .5rem;
     }
 
     .item {
