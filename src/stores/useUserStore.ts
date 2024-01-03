@@ -1,7 +1,7 @@
-import { defineStore } from "pinia";
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import securityApi from "@/apis/services/video-platform-security";
-import { useLocalStorage } from "@vueuse/core";
+import { defineStore } from 'pinia';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import securityApi from '@/apis/services/video-platform-security';
+import { useLocalStorage } from '@vueuse/core';
 
 const useUserStore = defineStore('user', () => {
 
@@ -21,7 +21,11 @@ const useUserStore = defineStore('user', () => {
     try {
       const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
       userInfoStorage.value = res.data.data ?? {};
-      avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
+      if (localStorage.getItem('avatar')) {
+        avatar.value = localStorage.getItem('avatar') ?? '';
+      } else {
+        avatar.value = `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
+      }
       console.log('user_info', userInfoStorage.value);
     } catch (e) {
       console.error(e);

@@ -4,15 +4,445 @@ import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import CusButton from '@/components/button/CusButton.vue';
 import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
 import PostItemCard from '@/pages/post/components/PostItemCard.vue';
-import { ref } from 'vue';
-
+import { ref, watch } from 'vue';
+import CusInput from '@/components/input/CusInput.vue';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
 const posts = ref<PostItemCardProps[]>([]); // 所有的帖子
 const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
 const hasNoMore = ref(false); // 是否还有更多帖子
+let editing = ref(false); // 是否正在编辑资料
+let signature = ref(''); // 个性签名
+let signatureLen = ref(signature.value.length); // 个性签名长度
+let date = ref(new Date().toLocaleDateString()).value.replace('/', '-').replace('/','-'); // 生日
+const maleColor = ref('#F5F5F5FF'); // 性别颜色
+const femaleColor = ref('#F5F5F5FF'); // 性别颜色
+const address = ref([
+  {
+    value: '1',
+    label: '北京',
+    children: [
+      {
+        value: '11',
+        label: '北京市',
+        children: [
+          {
+            value: '111',
+            label: '东城区'
+          },
+          {
+            value: '112',
+            label: '西城区'
+          },
+          {
+            value: '113',
+            label: '朝阳区'
+          },
+          {
+            value: '114',
+            label: '丰台区'
+          },
+          {
+            value: '115',
+            label: '石景山区'
+          },
+          {
+            value: '116',
+            label: '海淀区'
+          },
+          {
+            value: '117',
+            label: '门头沟区'
+          },
+          {
+            value: '118',
+            label: '房山区'
+          },
+          {
+            value: '119',
+            label: '通州区'
+          },
+          {
+            value: '120',
+            label: '顺义区'
+          },
+          {
+            value: '121',
+            label: '昌平区'
+          },
+          {
+            value: '122',
+            label: '大兴区'
+          },
+          {
+            value: '123',
+            label: '怀柔区'
+          },
+          {
+            value: '124',
+            label: '平谷区'
+          },
+          {
+            value: '125',
+            label: '密云区'
+          },
+          {
+            value: '126',
+            label: '延庆区'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    value: '2',
+    label: '浙江省',
+    children: [
+      {
+        value: '21',
+        label: '杭州市',
+        children: [
+          {
+            value: '211',
+            label: '西湖区'
+          },
+          {
+            value: '212',
+            label: '余杭区'
+          },
+          {
+            value: '213',
+            label: '拱墅区'
+          },
+          {
+            value: '214',
+            label: '富阳区'
+          },
+          {
+            value: '215',
+            label: '临安区'
+          },
+          {
+            value: '216',
+            label: '桐庐县'
+          },
+          {
+            value: '217',
+            label: '淳安县'
+          },
+          {
+            value: '218',
+            label: '建德市'
+          }
+        ]
+      },
+      {
+        value: '22',
+        label: '湖州市',
+        children: [
+          {
+            value: '221',
+            label: '吴兴区'
+          },
+          {
+            value: '222',
+            label: '安吉区'
+          },
+          {
+            value: '223',
+            label: '南浔区'
+          },
+          {
+            value: '224',
+            label: '德清县'
+          },
+          {
+            value: '225',
+            label: '长兴县'
+          }
+        ]
+      },
+    ]
+  },
+  {
+    value: '3',
+    label: '广东省',
+    children: [
+      {
+        value: '31',
+        label: '广州市',
+        children: [
+          {
+            value: '311',
+            label: '越秀区'
+          },
+          {
+            value: '312',
+            label: '天河区'
+          }
+        ]
+      },
+      {
+        value: '32',
+        label: '深圳市',
+        children: [
+          {
+            value: '321',
+            label: '罗湖区'
+          },
+          {
+            value: '322',
+            label: '福田区'
+          },
+          {
+            value: '323',
+            label: '南山区'
+          },
+          {
+            value: '324',
+            label: '宝安区'
+          },
+          {
+            value: '325',
+            label: '龙岗区'
+          },
+          {
+            value: '326',
+            label: '盐田区'
+          },
+          {
+            value: '327',
+            label: '龙华区'
+          },
+          {
+            value: '328',
+            label: '坪山区'
+          },
+          {
+            value: '329',
+            label: '光明区'
+          }
+        ]
+      },
+      {
+        value: '33',
+        label: '珠海市',
+        children: [
+          {
+            value: '331',
+            label: '香洲区'
+          },
+          {
+            value: '332',
+            label: '斗门区'
+          },
+          {
+            value: '333',
+            label: '金湾区'
+          },
+          {
+            value: '334',
+            label: '横琴新区'
+          },
+          {
+            value: '335',
+            label: '高栏港经济区'
+          },
+          {
+            value: '336',
+            label: '珠海保税区'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    value: '4',
+    label: '福建省',
+    children: [
+      {
+        value: '41',
+        label: '福州市',
+        children: [
+          {
+            value: '411',
+            label: '鼓楼区'
+          },
+          {
+            value: '412',
+            label: '台江区'
+          },
+          {
+            value: '413',
+            label: '仓山区'
+          },
+          {
+            value: '414',
+            label: '马尾区'
+          },
+          {
+            value: '415',
+            label: '晋安区'
+          },
+          {
+            value: '416',
+            label: '长乐区'
+          },
+          {
+            value: '417',
+            label: '福清市'
+          },
+          {
+            value: '418',
+            label: '闽侯县'
+          },
+          {
+            value: '419',
+            label: '连江县'
+          },
+          {
+            value: '420',
+            label: '罗源县'
+          },
+          {
+            value: '421',
+            label: '闽清县'
+          },
+          {
+            value: '422',
+            label: '永泰县'
+          },
+          {
+            value: '423',
+            label: '平潭县'
+          }
+        ]
+      },
+      {
+        value: '42',
+        label: '厦门市',
+        children: [
+          {
+            value: '421',
+            label: '思明区'
+          },
+          {
+            value: '422',
+            label: '海沧区'
+          },
+          {
+            value: '423',
+            label: '湖里区'
+          },
+          {
+            value: '424',
+            label: '集美区'
+          },
+          {
+            value: '425',
+            label: '同安区'
+          },
+          {
+            value: '426',
+            label: '翔安区'
+          }
+        ]
+      },
+      {
+        value: '43',
+        label: '莆田市',
+        children: [
+          {
+            value: '431',
+            label: '城厢区'
+          },
+          {
+            value: '432',
+            label: '涵江区'
+          },
+          {
+            value: '433',
+            label: '荔城区'
+          },
+          {
+            value: '434',
+            label: '秀屿区'
+          },
+          {
+            value: '435',
+            label: '仙游县'
+          }
+        ]
+      }
+    ]
+  }
+]);
+const selectedAddress = ref(['3', '32', '323']);
+
+const newPwd = ref('');
+const confirmPwd = ref('');
+const newPwdTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
+const confirmTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
+// 校验新密码
+watch(() => newPwd.value, (newValue) => {
+  if (newValue.length < 6 || newValue.length > 30) {
+    newPwdTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    let element = document.getElementById('newPwdTip');
+    if (element) {
+      element.style.color = 'red';
+    }
+  } else {
+    newPwdTip.value = '密码格式正确。';
+    let element = document.getElementById('newPwdTip');
+    if (element) {
+      element.style.color = '#9E9E9EFF';
+    }
+  }
+});
+
+// 实时匹配密码
+watch(() => confirmPwd.value, (newValue) => {
+  if (newValue !== newPwd.value) {
+    confirmTip.value = '两次密码不一致，请重新输入。';
+    let element = document.getElementById('confirmTip');
+    if (element) {
+      element.style.color = 'red';
+    }
+  } else {
+    confirmTip.value = '密码一致。';
+    let element = document.getElementById('confirmTip');
+    if (element) {
+      element.style.color = '#9E9E9EFF';
+    }
+  }
+});
+
+function choseMale() {
+  maleColor.value = '#adb7ff';
+  femaleColor.value = '#F5F5F5FF';
+}
+
+function choseFemale() {
+  maleColor.value = '#F5F5F5FF';
+  femaleColor.value = '#efcaff';
+}
+
+// 限制个性签名长度不超过100
+watch(signature, (newValue, oldValue) => {
+  signatureLen.value = newValue.length;
+  if (newValue.length > 200) {
+    signature.value = oldValue;
+  }
+});
+
 // 修改用户资料
-function edit() {
+async function edit() {
+  editing.value = true;
+}
+
+function submitForm() {
 
 }
 
@@ -30,6 +460,32 @@ function handleLoadMore() {
 
 }
 
+// 修改头像
+function changeAvatar() {
+  let element = document.getElementById('change-avatar');
+  if (element) {
+    element.click();
+    document.getElementById('change-avatar')?.addEventListener('change', (e) => {
+      let file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          let result = (e.target as FileReader).result;
+          if (result) {
+            localStorage.setItem('avatar', result.toString());
+            userStore.avatar = result.toString();
+          }
+        };
+      }
+    });
+  }
+}
+
+// 保存修改
+function save() {
+  
+}
 </script>
 
 <template>
@@ -49,11 +505,11 @@ function handleLoadMore() {
             <div id = "me-left-user-likes" class = "stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
           </div>
         </section>
-        <section class = "me-left-edit" @click = "edit">
+        <section v-if = "!editing" class = "me-left-edit" @click = "edit">
           编辑资料
         </section>
       </aside>
-      <main class = "me-main">
+      <main v-if = "!editing" id = "me-posts" class = "me-main">
         <section class = "me-main-actions">
           <div class = "me-main-actions-title">
             <CusButton id = "me-main-myPost" text = "我的帖子" type = "text"></CusButton>
@@ -77,6 +533,101 @@ function handleLoadMore() {
                         @delete-post = "(id) => handlePostDeleted(id)"
           />
           <div v-if = "!hasNoMore" ref = "loadMoreRef" class = "load-more" @click = "handleLoadMore">加载更多...</div>
+        </section>
+      </main>
+      <main v-if = "editing" id = "me-edit" class = "me-main">
+        <section class = "me-main-edit">
+          <form class = "me-main-edit-form" @submit.prevent = "submitForm">
+            <div class = "me-main-edit-form-avatar">
+              <img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
+              <input id="change-avatar" accept=".jpeg, .jpg, .png" style="display: none" type = "file">
+              <div class = "me-main-edit-form-avatar-icon" @click = "changeAvatar">
+                <svg class = "h-4 w-4 text-green-s dark:text-dark-green-s" fill = "white" height = "1em"
+                     viewBox = "0 0 24 24" width = "1em" xmlns = "http://www.w3.org/2000/svg">
+                  <path clip-rule = "evenodd"
+                        d = "M11 20a1 1 0 011-1h8a1 1 0 110 2h-8a1 1 0 01-1-1zM17.018 5c-.26 0-.51.104-.695.288L4.837 16.773l-.463 1.853 1.853-.463L17.712 6.677A.981.981 0 0017.018 5zm-2.11-1.126a2.983 2.983 0 014.219 4.217L7.444 19.773a1 1 0 01-.464.263l-3.738.934a1 1 0 01-1.213-1.212l.934-3.739a1 1 0 01.263-.464L14.91 3.874z"
+                        fill-rule = "evenodd"></path>
+                </svg>
+              </div>
+            </div>
+            <div class = "me-main-edit-form-bar">
+              <div class = "nickname">
+                <label for = "nickname">昵称</label>
+                <CusInput id = "nickname" :placeholder = "userStore.userInfo?.name" type = "text"></CusInput>
+              </div>
+              <div class = "gender">
+                <label for = "gender">性别</label>
+                <div class = "gender-item">
+                  <div class = "male">
+                    <CusButton id = "gender" :background-color = "maleColor" name = "male" type = "normal"
+                               @click = "choseMale">
+                      <svg class = "text-blue-s dark:text-dark-blue-s mr-[6px]" fill = "blue" height = "1em"
+                           viewBox = "0 0 24 24" width = "1em" xmlns = "http://www.w3.org/2000/svg">
+                        <path clip-rule = "evenodd"
+                              d = "M17.022 5.564h-2.586a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V6.978L16.17 9.243a7.001 7.001 0 01-10.557 9.143 7 7 0 019.143-10.557l2.265-2.265zM14.1 9.9a5 5 0 10-7.071 7.072 5 5 0 007.07-7.072z"
+                              fill-rule = "evenodd"></path>
+                      </svg>
+                      男
+                    </CusButton>
+                  </div>
+                  <div class = "female">
+                    <CusButton id = "gender" :background-color = "femaleColor" name = "female" type = "normal"
+                               @click = "choseFemale">
+                      <svg class = "text-label-2 dark:text-dark-label-2 mr-[6px]" fill = "red" height = "1em"
+                           viewBox = "0 0 24 24" width = "1em" xmlns = "http://www.w3.org/2000/svg">
+                        <path clip-rule = "evenodd"
+                              d = "M13 15.93V17h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2v-1.07A7.001 7.001 0 0112 2a7 7 0 011 13.93zM12 14a5 5 0 100-10 5 5 0 000 10z"
+                              fill-rule = "evenodd"></path>
+                      </svg>
+                      女
+                    </CusButton>
+                  </div>
+                
+                </div>
+              </div>
+            </div>
+            <div class = "me-main-edit-form-bar">
+              <div class = "birthday">
+                <label for = "birthday">生日</label>
+                <VueDatePicker v-model = "date"
+                               :max-date = "new Date()"
+                               :placeholder = "date"
+                               format = "yyyy-MM-dd"
+                               model-type = "format"
+                />
+              </div>
+              <div class = "address">
+                <label for = "address">现居地</label>
+                <div class = "options">
+                  <Cascader v-model:selected-value = "selectedAddress" :options = "address"></Cascader>
+                </div>
+              </div>
+            </div>
+            <div class = "me-main-edit-form-bar">
+              <div class = "signature">
+                <label for = "signature">个性签名</label>
+                <textarea id = "signature" v-model = "signature"
+                          class = "textarea" placeholder = "这个人很懒，什么都没留下..."></textarea>
+                <span>{{ signatureLen }}/200</span>
+              </div>
+            </div>
+            <div class = "me-main-edit-form-bar">
+              <div class = "password">
+                <span class = "title">修改密码</span>
+                <label for = "password">新密码</label>
+                <CusInput id = "newPwd" v-model = "newPwd" :input-attrs = "{type: 'password'}"
+                          placeholder = "请输入新密码"></CusInput>
+                <span id = "newPwdTip" class = "tips">{{ newPwdTip }}</span>
+                <label for = "confirmPwd">确认密码</label>
+                <CusInput id = "password" v-model = "confirmPwd" :input-attrs = "{type: 'password'}"
+                          placeholder = "请再次输入密码"></CusInput>
+                <span id = "confirmTip" class = "tips">{{ confirmTip }}</span>
+              </div>
+            </div>
+            <div class="me-main-edit-form-bar">
+              <CusButton text = "保存" type = "success" @click = "save"></CusButton>
+            </div>
+          </form>
         </section>
       </main>
     </div>
@@ -230,15 +781,192 @@ function handleLoadMore() {
       display: flex;
       flex-direction: column;
       gap: .5rem;
+      
       .post-item {
         @extend %card;
       }
+      
       .load-more {
         @extend %click-able;
         @extend %button-like;
         @extend %card;
         text-align: center;
         color: $color-primary;
+      }
+    }
+    
+    &-edit {
+      @extend %card;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      
+      &-form {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1rem;
+        
+        &-avatar {
+          position: relative;
+          height: auto;
+          border-radius: .75rem;
+          //overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin: 0 auto;
+          
+          &-icon {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 1.6rem;
+            height: 1.6rem;
+            background-color: $color-primary;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          
+          img {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 50%;
+            object-position: center;
+            object-fit: cover;
+          }
+        }
+        
+        &-bar {
+          display: flex;
+          flex-direction: row;
+          //position: relative;
+          gap: .5rem;
+          
+          .gender {
+            display: flex;
+            flex-direction: column;
+            
+            &-item {
+              display: flex;
+              flex-direction: row;
+              gap: .5rem;
+              
+              & > div {
+                flex: 1;
+                display: flex;
+                flex-direction: row;
+                gap: .5rem;
+                
+                &:not(:last-child) {
+                  margin-right: .5rem;
+                }
+                
+                & > input {
+                  flex: 1;
+                  display: flex;
+                  flex-direction: row;
+                  gap: .5rem;
+                  border: 1px solid #E0E0E0FF;
+                  border-radius: .5rem;
+                  padding: .5rem;
+                  background-color: #F5F5F5FF;
+                }
+              }
+              
+            }
+          }
+          
+          .signature {
+            display: flex;
+            flex-direction: column;
+            
+            textarea {
+              flex: 1;
+              position: relative;
+              background-color: #F5F5F5FF;
+              padding: .5rem;
+              resize: none;
+              border-radius: .5rem;
+            }
+            
+            // todo 点击时边框大小会改变
+            textarea:focus {
+              border: solid $color-primary
+            }
+            
+          }
+          
+          .birthday {
+          }
+          
+          .address {
+            display: flex;
+            flex-direction: column;
+            
+            div {
+              display: flex;
+              flex-direction: row;
+              gap: .5rem;
+              
+              &:not(:last-child) {
+                margin-bottom: .5rem;
+              }
+              
+              & > div {
+                flex: 1;
+                display: flex;
+                flex-direction: row;
+                gap: .5rem;
+                
+                &:not(:last-child) {
+                  margin-right: .5rem;
+                }
+              }
+            }
+          }
+          
+          .password {
+            display: flex;
+            flex-direction: column;
+            
+            .title {
+              font-size: 1.1rem;
+              font-weight: bold;
+              display: flex;
+            }
+            
+            .tips {
+              font-size: .8rem;
+              color: #9E9E9EFF;
+            }
+          }
+          
+        }
+        
+        div {
+          display: flex;
+          flex-direction: row;
+          gap: .5rem;
+          
+          &:not(:last-child) {
+            margin-bottom: .5rem;
+          }
+          
+          
+          & > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            
+            &:not(:last-child) {
+              margin-right: .5rem;
+            }
+          }
+        }
       }
     }
   }

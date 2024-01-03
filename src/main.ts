@@ -10,10 +10,16 @@ import router from './router';
 import { VueQueryPlugin } from '@tanstack/vue-query';
 import shake from '@/commands/shake';
 
-import * as IconParkIcons from "@icon-park/vue-next";
+import * as IconParkIcons from '@icon-park/vue-next';
+
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+import 'vue-amazing-ui/css';
+import VueAmazingUI from 'vue-amazing-ui';
 
 const app = createApp(App);
-
+app.component('VueDatePicker', VueDatePicker);
+app.use(VueAmazingUI)
 app.use(createPinia());
 app.use(router);
 app.use(VueQueryPlugin);
