@@ -29,6 +29,10 @@ watch(() => editing.value, (newValue) => {
       router.push('/me/edit');
     }
     edit();
+  } else {
+    if (router.currentRoute.value.path == '/me/edit') {
+      router.push('/me');
+    }
   }
 });
 let signature = ref(''); // 个性签名
@@ -569,8 +573,8 @@ function save() {
             <div id = "me-left-user-likes" class = "stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
           </div>
         </section>
-        <section v-if = "!editing" class = "me-left-edit" @click = "edit">
-          编辑资料
+        <section class = "me-left-edit" @click = "() => editing ? editing = false : edit()">
+          {{ editing ? '返回' : '编辑资料' }}
         </section>
       </aside>
       <main v-if = "!editing" id = "me-posts" class = "me-main">
