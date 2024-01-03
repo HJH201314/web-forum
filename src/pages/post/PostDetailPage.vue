@@ -149,7 +149,7 @@ const globe = useGlobal();
 
   &-card {
     width: 100%;
-    max-width: 1440px;
+    max-width: 1280px;
     margin-inline: auto;
     margin-top: 1rem;
     margin-bottom: 1rem;

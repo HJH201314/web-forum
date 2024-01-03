@@ -1,29 +1,29 @@
 <script setup lang="ts">
 
 import { computed, nextTick, reactive, ref, watch } from 'vue';
-import type { VideoPickerFunc, VideoPickerModel, VideoPickerModelItem } from "@/components/video-picker/VideoPicker";
+import type { AudioPickerFunc, AudioPickerModel, AudioPickerModelItem } from "@/components/audio-picker/AudioPicker";
 import { CloseOne, Plus } from "@icon-park/vue-next";
 
-type VideoPickerProps = {
-  modelValue?: VideoPickerModel; // v-model返回文件对象
+type AudioPickerProps = {
+  modelValue?: AudioPickerModel; // v-model返回文件对象
   limit?: number;
   showSelectOnEmpty?: boolean; // 是否在没有图片时显示选择按钮
   showSelectNotEmpty?: boolean; // 是否在有图片时显示选择按钮
 };
-const props = withDefaults(defineProps<VideoPickerProps>(), {
+const props = withDefaults(defineProps<AudioPickerProps>(), {
   limit: 9,
   showSelectOnEmpty: true,
   showSelectNotEmpty: true,
 });
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', value: VideoPickerModel): void; // 选择或移除图片后
+  (event: 'update:modelValue', value: AudioPickerModel): void; // 选择或移除图片后
   (event: 'change', value: File[]): void; // 选择或移除图片后
   (event: 'limited'): void; // 超过数量限制
 }>();
 
-defineExpose<VideoPickerFunc>({
-  selectVideo,
+defineExpose<AudioPickerFunc>({
+  selectAudio,
 });
 
 const inputRef = ref<HTMLInputElement>();
@@ -34,14 +34,14 @@ const displaySelect = computed(() => {
 const form = reactive({
   files: [] as File[],
   paths: [] as string[],
-  previewingVideo: ref<number>(-1),
+  previewingAudio: ref<number>(-1),
 });
 
 /**
  * @export
  * 调起文件选择
  * */
-function selectVideo() {
+function selectAudio() {
   if (form.files.length >= props.limit) {
     emit('limited');
     return;
@@ -51,7 +51,7 @@ function selectVideo() {
 }
 
 /* 处理图片移除 */
-function handleVideoRemove(index: number) {
+function handleAudioRemove(index: number) {
   form.files.splice(index, 1);
   form.paths.splice(index, 1);
   nextTick(() => {
@@ -60,22 +60,25 @@ function handleVideoRemove(index: number) {
 }
 
 /* 处理图片点击 */
-function handleVideoClick(e: any, index: number) {
+function handleAudioClick(e: any, index: number) {
   // 预览图片
-  form.previewingVideo = index;
+  form.previewingAudio = index;
 }
 
 /* 处理文件选择事件 */
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
+  console.log(1);
   if (!target.files) {
     return;
   }
+  console.log(2);
   const files = Array.from(target.files);
   if (form.files.length + files.length > props.limit) {
     emit('limited');
     return;
   }
+  console.log(3);
   form.files = [...form.files, ...files];
   form.paths = [...form.paths, ...files.map(file => URL.createObjectURL(file))];
   nextTick(() => {
@@ -122,42 +125,49 @@ watch(() => props.modelValue, (value) => {
 
 /* 发送emit通知 */
 function notify() {
-  console.log('notify', form.files, form.paths);
+  console.log(form.files);
   emit('update:modelValue', form.files.map((file, index) => {
     return {
       file,
       path: form.paths[index],
-    } as VideoPickerModelItem;
+    } as AudioPickerModelItem;
+  }));
+  console.log(form.files.map((file, index) => {
+    return {
+      file,
+      path: form.paths[index],
+    } as AudioPickerModelItem;
   }));
   emit('change', form.files);
+  console.log(form.files);
 }
 </script>
 
 <template>
-  <div class="video-picker">
-    <input ref="inputRef" type="file" multiple accept="video/*" @change="handleFileChange" />
+  <div class="audio-picker">
+    <input ref="inputRef" type="file" multiple accept="audio/*" @change="handleFileChange" />
     <teleport to="body">
-      <div v-if="form.previewingVideo != -1" class="video-picker__previewer" @click="form.previewingVideo = -1">
-        <transition name="video-scale" appear>
-          <video controls autoplay v-if="form.previewingVideo != -1" class="video-picker__previewer--img" :src="form.paths[form.previewingVideo]" draggable="false" />
+      <div v-if="form.previewingAudio != -1" class="audio-picker__previewer" @click="form.previewingAudio = -1">
+        <transition name="audio-scale" appear>
+          <audio controls v-if="form.previewingAudio != -1" class="audio-picker__previewer--img" :src="form.paths[form.previewingAudio]" draggable="false" />
         </transition>
-        <div class="video-picker__previewer--mask"></div>
+        <div class="audio-picker__previewer--mask"></div>
       </div>
     </teleport>
-    <div class="video-picker__preview" @dragover.prevent>
+    <div class="audio-picker__preview" @dragover.prevent>
       <transition-group name="list">
-        <div class="video-picker__preview__item" v-for="(file, i) in form.files" :key="i"
-             draggable="true" @dragover.prevent @click="(e) => handleVideoClick(e, i)"
-             @contextmenu.prevent="handleVideoRemove(i)"
+        <div class="audio-picker__preview__item" v-for="(file, i) in form.files" :key="i"
+             draggable="true" @dragover.prevent @click="(e) => handleAudioClick(e, i)"
+             @contextmenu.prevent="handleAudioRemove(i)"
              @dragstart="(e) => handleDragStart(e, i)" @dragenter="(e) => handleDragEnter(e, i)">
 <!--          <img :src="path" alt="picker-preview" draggable="false" @click="handleImageClick(i)" />-->
-          <span>【视频】{{ file.name }}</span>
-          <CloseOne class="video-picker__preview__item__del" size="1.5rem" theme="filled" @click.stop="handleVideoRemove(i)" />
+          <span>【音频】{{ file.name }}</span>
+          <CloseOne class="audio-picker__preview__item__del" size="1.5rem" theme="filled" @click.stop="handleAudioRemove(i)" />
         </div>
       </transition-group>
-      <div v-if="displaySelect" class="video-picker__preview__select">
-        <Plus class="video-picker__preview__select__plus" size="1rem" theme="outline" @click="selectVideo" />
-        添加视频
+      <div v-if="displaySelect" class="audio-picker__preview__select">
+        <Plus class="audio-picker__preview__select__plus" size="1rem" theme="outline" @click="selectAudio" />
+        添加音频
       </div>
     </div>
   </div>
@@ -165,7 +175,7 @@ function notify() {
 
 <style scoped lang="scss">
 @import "@/assets/variables.module";
-.video-picker {
+.audio-picker {
   input {
     display: none;
   }
@@ -213,7 +223,7 @@ function notify() {
         @extend %hover-able;
         @extend %click-able;
 
-        .video-picker__preview__item__del {
+        .audio-picker__preview__item__del {
           scale: 1;
         }
       }
@@ -260,16 +270,16 @@ function notify() {
 </style>
 <style lang="scss">
 @import "@/assets/animations.scss";
-.video-scale-enter-active,
-.video-scale-leave-active {
+.audio-scale-enter-active,
+.audio-scale-leave-active {
   transition: scale .3s $ease-in-out-circ;
 }
-.video-scale-enter-from,
-.video-scale-leave-to {
+.audio-scale-enter-from,
+.audio-scale-leave-to {
   scale: 0;
 }
-.video-scale-enter-to,
-.video-scale-leave-from {
+.audio-scale-enter-to,
+.audio-scale-leave-from {
   scale: 1;
 }
 </style>

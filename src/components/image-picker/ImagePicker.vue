@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import type { ImagePickerFunc, ImagePickerModel, ImagePickerModelItem } from "@/components/image-picker/ImagePicker";
 import { CloseOne, Plus } from "@icon-park/vue-next";
 
@@ -42,6 +42,11 @@ const form = reactive({
  * 调起文件选择
  * */
 function selectImage() {
+  if (form.files.length >= props.limit) {
+    emit('limited');
+    return;
+  }
+  inputRef.value!.value = ''; // 清空input的value，否则选择同一文件不会触发change事件
   inputRef.value?.click();
 }
 
@@ -50,7 +55,9 @@ function handleImageRemove(path: string) {
   const index = form.paths.indexOf(path);
   form.files.splice(index, 1);
   form.paths.splice(index, 1);
-  notify();
+  nextTick(() => {
+    notify();
+  });
 }
 
 /* 处理图片点击 */
@@ -66,13 +73,15 @@ function handleFileChange(e: Event) {
     return;
   }
   const files = Array.from(target.files);
-  if (files.length > props.limit) {
+  if (form.files.length + files.length > props.limit) {
     emit('limited');
     return;
   }
   form.files = [...form.files, ...files];
   form.paths = [...form.paths, ...files.map(file => URL.createObjectURL(file))];
-  notify();
+  nextTick(() => {
+    notify();
+  });
 }
 
 /* 处理拖动排序事件 */
@@ -97,7 +106,9 @@ function handleDragEnter(e: DragEvent, index: number) {
     paths.splice(index, 0, dragPath);
     console.log(files, paths);
     dragIndex.value = index;
-    notify();
+    nextTick(() => {
+      notify();
+    });
   }
 }
 
@@ -142,14 +153,14 @@ function notify() {
     <div class="image-picker__preview" @dragover.prevent>
       <transition-group name="list">
         <div class="image-picker__preview__item" v-for="(path, i) in form.paths" :key="path"
-             draggable="true" @dragover.prevent
+             draggable="true" @dragover.prevent @contextmenu.prevent="handleImageRemove(path)"
              @dragstart="(e) => handleDragStart(e, i)" @dragenter="(e) => handleDragEnter(e, i)">
           <img :src="path" alt="picker-preview" draggable="false" @click="handleImageClick(i)" />
           <CloseOne class="image-picker__preview__item__del" size="1.5rem" theme="filled" @click="handleImageRemove(path)" />
         </div>
       </transition-group>
-      <div v-if="displaySelect" class="image-picker__preview__select">
-        <Plus class="image-picker__preview__select__plus" size="2.5rem" theme="outline" @click="selectImage" />
+      <div v-if="displaySelect" class="image-picker__preview__select" @click="selectImage">
+        <Plus class="image-picker__preview__select__plus" size="2.5rem" theme="outline" />
       </div>
     </div>
   </div>

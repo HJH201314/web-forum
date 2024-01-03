@@ -2,23 +2,28 @@
 import { computed, onMounted, ref } from "vue";
 import type { ToastProps } from './index';
 import variables from "@/assets/variables.module.scss";
+import { getDarkerColor } from '@/utils/color';
 
 const props = withDefaults(defineProps<ToastProps>(), {
   text: '',
   position: 'top-center',
   duration: 'normal',
   type: 'normal',
+
+  // 启用操作栏
+  actionText: '',
+  action: () => { /* empty */ },
 });
 
 const myself = ref<HTMLElement>();
 const durationTimeMs = computed(() => {
   switch (props.duration) {
     case 'long':
-      return 1500;
+      return 3000;
     case 'normal':
-      return 1000;
+      return 1500;
     case 'short':
-      return 500;
+      return 1000;
     default:
       return props.duration;
   }
@@ -38,6 +43,7 @@ const toastClass = computed(() => {
 });
 
 const wrapperColor = computed(() => {
+  if (props.actionText) return variables.colorWhite; // 带action
   switch (props.type) {
     case 'success':
       return variables.colorSuccess;
@@ -47,8 +53,30 @@ const wrapperColor = computed(() => {
       return variables.colorDanger;
     case 'info':
       return variables.colorInfo;
-    default:
+    case 'normal':
+    case 'primary':
       return variables.colorPrimary;
+    default:
+      return variables.colorWhite;
+  }
+});
+
+const shadowColor = computed(() => {
+  return getDarkerColor(wrapperColor.value, 0.5);
+});
+
+const fontColor = computed(() => {
+  if (props.actionText) return variables.colorBlack; // 带action
+  switch (props.type) {
+    case 'success':
+    case 'warning':
+    case 'danger':
+    case 'info':
+    case 'normal':
+    case 'primary':
+      return variables.colorWhite;
+    default:
+      return variables.colorBlack;
   }
 });
 </script>
@@ -59,6 +87,7 @@ const wrapperColor = computed(() => {
       <div class="toast-wrapper">
         <span v-if="text" class="toast-text">{{ props.text }}</span>
         <slot v-if="$slots.default"></slot>
+        <span v-if="props.actionText" class="toast-action" @click="props.action">{{ props.actionText }}</span>
       </div>
     </div>
   </Teleport>
@@ -77,10 +106,15 @@ const wrapperColor = computed(() => {
     flex-direction: row;
     align-items: center;
     gap: .5rem;
-    color: $color-white;
+    color: v-bind(fontColor);
     background-color: v-bind(wrapperColor);
-    box-shadow: 0 0 4px v-bind(wrapperColor);
+    box-shadow: 0 0 4px v-bind(shadowColor);
     opacity: 0.9;
+  }
+
+  &-action {
+    cursor: pointer;
+    color: $color-primary;
   }
 
   &-top-center {

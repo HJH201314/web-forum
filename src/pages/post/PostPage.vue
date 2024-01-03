@@ -2,7 +2,7 @@
 import useUserStore from "@/stores/useUserStore";
 import { DEFAULT_USER_AVATAR } from "@/constants/defaultImage";
 import { reactive, ref, watch } from "vue";
-import { Instagram, Topic, SettingOne, VideoOne } from '@icon-park/vue-next';
+import { Instagram, Topic, SettingOne, VideoOne, VoiceOne } from '@icon-park/vue-next';
 import PostItemCard from "@/pages/post/components/PostItemCard.vue";
 import type { PostItemCardProps } from "@/pages/post/components/PostItemCard";
 import { useRouter } from "vue-router";
@@ -19,12 +19,17 @@ import { useIntersectionObserver } from '@vueuse/core';
 import useGlobal from '@/commands/useGlobal';
 import CusTooltip from '@/components/tooltip/CusTooltip.vue';
 import VideoPicker from '@/components/video-picker/VideoPicker.vue';
+import AudioPicker from '@/components/audio-picker/AudioPicker.vue';
+import type { AudioPickerFunc, AudioPickerModel } from '@/components/audio-picker/AudioPicker';
+import ToastManager from '@/components/toast/ToastManager';
+import { DialogManager } from '@/components/dialog';
 
 const userStore = useUserStore();
 
 /* 图片选择组件实例 */
 const imagePickerRef = ref<ImagePickerFunc>();
 const videoPickerRef = ref<VideoPickerFunc>();
+const audioPickerRef = ref<AudioPickerFunc>();
 
 function handleImageSelect() {
   imagePickerRef.value?.selectImage();
@@ -34,6 +39,10 @@ function handleVideoSelect() {
   videoPickerRef.value?.selectVideo();
 }
 
+function handleAudioSelect() {
+  audioPickerRef.value?.selectAudio();
+}
+
 const publishForm = reactive({
   pid: ref(1),
   topic: ref(''),
@@ -41,6 +50,7 @@ const publishForm = reactive({
   content: ref(''),
   images: ref<ImagePickerModel>([]),
   videos: ref<VideoPickerModel>([]),
+  audios: ref<AudioPickerModel>([]),
 });
 
 const router = useRouter();
@@ -74,11 +84,30 @@ watch(() => postResult.value, async () => {
   postResult.value = []; // 处理完成后清空
 });
 
+const userPostCount = ref(0);
+// 检测用户id，获取用户帖子信息
+watch(() => userStore.userInfo.id, async (newVal) => {
+  if (newVal != undefined) {
+    try {
+      const res = await adminApi.updatesController.countUpdatesUsingGet({
+        uid: newVal,
+      });
+      if (res.data?.code == 200) {
+        userPostCount.value = res.data.data ?? 0;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+}, { immediate: true });
+
 async function getPosts() {
   try {
     const res = await adminApi.updatesController.getInPageUsingGet({
       pageNum: currentPage.value,
       pageSize: 10,
+    }, {
+
     });
     if (res.data.data?.length == 0) {
       showToast({ type: 'info', text: '没有更多啦' });
@@ -105,6 +134,34 @@ async function handlePublishPost() {
   }
   uploading.value = true;
   try {
+    // 上传视频
+    if (publishForm.videos.length > 0) {
+      for (const item of publishForm.videos) {
+        const formData = new FormData();
+        formData.append('file', item.file);
+        const res = await adminApi.updatesControllerFix.uploadFileUsingPost(formData);
+        if (res.data?.code == 200) {
+          publishForm.content += `[video:${res.data.data}]`;
+        } else {
+          ToastManager.danger(`上传视频失败：${res.data?.message}`);
+          break;
+        }
+      }
+    }
+    // 上传音频
+    if (publishForm.audios.length > 0) {
+      for (const item of publishForm.audios) {
+        const formData = new FormData();
+        formData.append('file', item.file);
+        const res = await adminApi.updatesControllerFix.uploadFileUsingPost(formData);
+        if (res.data?.code == 200) {
+          publishForm.content += `[audios:${res.data.data}]`;
+        } else {
+          ToastManager.danger(`上传音频失败：${res.data?.message}`);
+          break;
+        }
+      }
+    }
     await delay(1000);
     // 创建 FormData 对象
     const formData = new FormData();
@@ -119,11 +176,20 @@ async function handlePublishPost() {
       content: content,
     }, formData);
     if (res.data?.code == 200) {
-      showToast({ type: 'success', text: '发布成功' });
       clearInput();
       currentPage.value = 0; // 重置页码
       posts.value = [];
       hasNoMore.value = false;
+
+      ToastManager.show({
+        text: '发布帖子成功！',
+        action: async () => {
+          if (!res.data?.data) return;
+          await doPostDelete(res.data.data);
+        },
+        actionText: '撤回',
+        duration: 'long',
+      });
     } else {
       showToast({ type: 'danger', text: `发布失败：${res.data?.message}` });
     }
@@ -131,6 +197,21 @@ async function handlePublishPost() {
     showToast({ type: 'danger', text: '发布失败' });
   } finally {
     uploading.value = false;
+  }
+}
+
+/* 用于撤回刚发布的帖子 */
+async function doPostDelete(id: number) {
+  try {
+    const res = await adminApi.updatesController.deleteEssayByIdUsingDelete({
+      id: id,
+    });
+    if (res.data?.code == 200) {
+      showToast({ type: 'success', text: '撤回成功' });
+      handlePostDeleted(id);
+    }
+  } catch (e) {
+    showToast({ type: 'danger', text: '撤回失败' });
   }
 }
 
@@ -163,14 +244,44 @@ function handleTitleInput() {
   }
 }
 
+function handleClearClick() {
+  DialogManager.commonDialog({
+    title: '清空内容',
+    content: '确定要清空输入的所有文本、文件内容吗？',
+    onConfirm: () => {
+      clearInput();
+    },
+  });
+}
+
 function clearInput() {
   publishForm.pid = 1;
   publishForm.topic = '';
   publishForm.title = '';
   publishForm.content = '';
   publishForm.images = [];
-  currentPage.value = 1;
+  publishForm.videos = [];
+  publishForm.audios = [];
+  currentPage.value = 0;
   posts.value = [];
+}
+
+/* 上传数量限制 */
+const MAX_IMAGE_COUNT = 9;
+const MAX_VIDEO_COUNT = 1;
+const MAX_AUDIO_COUNT = 3;
+function handleUploadLimited(type: 'image' | 'video' | 'audio') {
+  switch (type) {
+    case 'image':
+      ToastManager.danger(`最多上传 ${MAX_IMAGE_COUNT} 张图片`);
+      break;
+    case 'video':
+      ToastManager.danger(`最多上传 ${MAX_VIDEO_COUNT} 个视频`);
+      break;
+    case 'audio':
+      ToastManager.danger(`最多上传 ${MAX_AUDIO_COUNT} 个音频`);
+      break;
+  }
 }
 
 /* 无限加载控制 */
@@ -198,7 +309,7 @@ const globe = useGlobal();
           </div>
           <div class="stats">
             <div id="post-left-user-follow" class="stats-item"><span>{{ 1024 }}</span><span>成长值</span></div>
-            <div id="post-left-user-fans" class="stats-item"><span>{{ 11 }}</span><span>帖子</span></div>
+            <div id="post-left-user-fans" class="stats-item"><span>{{ userPostCount }}</span><span>帖子</span></div>
             <div id="post-left-user-fans" class="stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
           </div>
         </section>
@@ -220,18 +331,32 @@ const globe = useGlobal();
           </div>
           <div class="input">
             <textarea placeholder="写下你的用户故事..." v-model="publishForm.content" @input="handleContentInput" />
-            <ImagePicker ref="imagePickerRef" :show-select-on-empty="false" show-select-not-empty v-model="publishForm.images" />
-            <VideoPicker ref="videoPickerRef" :show-select-on-empty="false" :show-select-not-empty="false" v-model="publishForm.videos" />
+            <ImagePicker ref="imagePickerRef" @limited="handleUploadLimited('image')" :show-select-on-empty="false" show-select-not-empty v-model="publishForm.images" :limit="MAX_IMAGE_COUNT" />
+            <VideoPicker ref="videoPickerRef" @limited="handleUploadLimited('video')" :show-select-on-empty="false" :show-select-not-empty="false" v-model="publishForm.videos" :limit="MAX_VIDEO_COUNT" />
+            <AudioPicker ref="audioPickerRef" @limited="handleUploadLimited('audio')" :show-select-on-empty="false" :show-select-not-empty="false" v-model="publishForm.audios" :limit="MAX_AUDIO_COUNT" />
             <div class="actions-placeholder"></div>
             <div class="actions">
               <CusTooltip position="bottom" text="添加图片">
-                <CusButton class="action" @click="handleImageSelect"><span class="icon"><instagram theme="outline"/></span></CusButton>
+                <CusButton @click="handleImageSelect" :button-style="{'padding': '.25rem .5rem'}">
+                  <span><instagram theme="outline"/></span>
+                  <span v-if="publishForm.images.length">{{ publishForm.images.length }}/{{ MAX_IMAGE_COUNT }}</span>
+                </CusButton>
               </CusTooltip>
-              <CusTooltip position="bottom" text="上传视频">
-                <CusButton class="action" @click="handleVideoSelect"><span class="icon"><video-one theme="outline"/></span></CusButton>
+              <CusTooltip position="bottom" text="添加视频">
+                <CusButton @click="handleVideoSelect" :button-style="{'padding': '.25rem .5rem'}">
+                  <span><video-one theme="outline"/></span>
+                  <span v-if="publishForm.videos.length">{{ publishForm.videos.length }}/{{ MAX_VIDEO_COUNT }}</span>
+                </CusButton>
               </CusTooltip>
+              <CusTooltip position="bottom" text="添加音频">
+                <CusButton @click="handleAudioSelect" :button-style="{'padding': '.25rem .5rem'}">
+                  <span><voice-one theme="outline"/></span>
+                  <span v-if="publishForm.audios.length">{{ publishForm.audios.length }}/{{ MAX_AUDIO_COUNT }}</span>
+                </CusButton>
+              </CusTooltip>
+              <CusButton style="margin-left: auto;" type="text" background-color="#00000000" font-color="#0000005F" @click="handleClearClick" :disabled="uploading" text="清空"></CusButton>
               <span class="length-tip">{{ publishForm.content.length }} / {{ MAX_CONTENT_LENGTH }}</span>
-              <div class="action"><span class="icon"><setting-one theme="outline"/></span></div>
+<!--              <div class="action"><span class="icon"><setting-one theme="outline"/></span></div>-->
               <CusButton type="primary" @click="handlePublishPost" :disabled="uploading" text="发布"><Spinning :show="uploading" /></CusButton>
             </div>
           </div>
@@ -415,7 +540,7 @@ const globe = useGlobal();
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: .5rem;
+        gap: .25rem;
         textarea {
           width: 100%;
           height: 3.5rem;
@@ -457,7 +582,6 @@ const globe = useGlobal();
           transform: translate(-50%, -50%);
         }
         .length-tip {
-          margin-left: auto;
           margin-right: .25rem;
           font-size: .8rem;
           color: $color-grey-500;
