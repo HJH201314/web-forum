@@ -80,7 +80,7 @@ const buttonStyles = computed<CSSProperties[]>(() => {
 
 const router = useRouter();
 function handleBackClick() {
-  useRouter().go(-1);
+  router.replace('/post');
 }
 
 function handleLikeClick() {
@@ -105,14 +105,6 @@ const globe = useGlobal();
 
 <template>
   <div class="post-detail">
-    <div class="post-detail-return" :class="{'small': globe.isSmallScreen}" :style="{'right': actionBarLeft}">
-      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[0]"
-                 :type="likeCacheStore.isLiked('post:' + props.postId) ? 'primary' : 'normal'"
-                 @click="handleBackClick"
-      >
-        <Back size="1.5rem" />
-      </CusButton>
-    </div>
     <div ref="postItemCardRef" class="post-detail-card">
       <PostItemCard
         type="post"
@@ -128,6 +120,13 @@ const globe = useGlobal();
         :show-action="false"
         default-tab="comment"
       />
+    </div>
+    <div class="post-detail-return" :class="{'small': globe.isSmallScreen}" :style="{'right': actionBarLeft}">
+      <CusButton class="post-detail-bar-action" :button-style="buttonStyles[0]"
+                 @click="handleBackClick"
+      >
+        <Back size="1.5rem" />
+      </CusButton>
     </div>
     <div class="post-detail-bar" :class="{'small': globe.isSmallScreen}" :style="{'left': actionBarLeft}">
       <CusButton class="post-detail-bar-action" :button-style="buttonStyles[0]"
@@ -148,6 +147,7 @@ const globe = useGlobal();
         <ShareTwo size="1.5rem" />
       </CusButton>
     </div>
+    <div class="post-detail-placeholder"></div>
   </div>
 </template>
 
@@ -176,6 +176,15 @@ const globe = useGlobal();
     display: flex;
     flex-direction: column;
     gap: .5rem;
+
+    &.small {
+      position: fixed;
+      top: unset !important;
+      right: unset !important;
+      left: .75rem !important;
+      bottom: .75rem !important;
+      flex-direction: row;
+    }
   }
 
   &-bar {
@@ -186,10 +195,11 @@ const globe = useGlobal();
     gap: .5rem;
 
     &.small {
-      position: sticky;
-      right: 0;
-      bottom: .75rem;
-      margin: .25rem auto;
+      position: fixed;
+      left: unset !important;
+      top: unset !important;
+      bottom: .75rem !important;
+      right: .75rem !important;
       flex-direction: row;
     }
 
@@ -197,6 +207,10 @@ const globe = useGlobal();
       border-radius: .5rem;
       box-shadow: $box-shadow;
     }
+  }
+
+  &-placeholder {
+    height: 3rem;
   }
 
 }

@@ -204,10 +204,10 @@ function handleSearch() {
   addSearchHis(form.searchVal);
   if (router.currentRoute.value.path == '/post') {
     if (!form.searchVal) router.replace('/post');
-    else router.replace(`/post?keyword=${encodeURIComponent(form.searchVal)}`);
+    else router.replace(`/post?keyword=${encodeURIComponent(encodeURIComponent(form.searchVal))}`); // 不知道为啥要两次encodeURIComponent才对中文生效
   } else {
     if (!form.searchVal) router.replace('/post');
-    else router.push(`/post?keyword=${encodeURIComponent(form.searchVal)}`);
+    else router.push(`/post?keyword=${encodeURIComponent(encodeURIComponent(form.searchVal))}`);
   }
   form.searchVal = "";
   // window.open(router.resolve(`/search?type=video&keyword=${form.searchVal}`).href, '_blank');
@@ -229,7 +229,7 @@ const globe = useGlobal();
                 <component :is="entry.icon" style="font-size: 1.5rem;"></component>
                 <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
               </div>
-              <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
+              <div v-if="router.currentRoute.value.path.startsWith(entry.href ?? '/')" class="active-underline" />
             </template>
           </CusPopover>
         </li>
@@ -269,7 +269,7 @@ const globe = useGlobal();
                 <span v-if="globe.isLargeScreen">{{ entry.name }}</span>
                 <component :is="entry.icon" style="font-size: 1.5rem;"></component>
               </div>
-              <div v-if="entry.href == router.currentRoute.value.path" class="active-underline" />
+              <div v-if="router.currentRoute.value.path.startsWith(entry.href ?? '/')" class="active-underline" />
             </template>
           </CusPopover>
         </li>

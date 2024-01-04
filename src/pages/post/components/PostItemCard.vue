@@ -2,7 +2,7 @@
 
 import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import DateFormat from '@/components/date-format/DateFormat.vue';
-import { CommentOne, DeleteOne, MoreOne, ThumbsUp } from '@icon-park/vue-next';
+import { CommentOne, Edit, DeleteOne, MoreOne, ThumbsUp } from '@icon-park/vue-next';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
 import CommentView from '@/pages/post/components/CommentView.vue';
@@ -136,6 +136,14 @@ function handleUnfold() {
   readingMore.value = !readingMore.value;
 }
 
+function handleEditPost() {
+  if (props.userId != userStore.userInfo.id) {
+    showToast({ text: '别改别人的啊', type: 'danger' });
+    return;
+  }
+  router.push(`/post/edit/${props.postId}`);
+}
+
 function handleDeletePost() {
   if (props.userId != userStore.userInfo.id) {
     showToast({ text: '别删别人的啊', type: 'danger' });
@@ -232,6 +240,9 @@ const router = useRouter();
         </template>
         <template #popover>
           <div class="more-actions">
+            <div class="edit" v-if="userStore.userInfo.id == props.userId" @click="handleEditPost">
+              <Edit theme="outline" size="1.25rem" />
+            </div>
             <div class="delete" v-if="userStore.userInfo.id == props.userId" @click="handleDeletePost">
               <DeleteOne theme="outline" size="1.25rem" />
             </div>
@@ -316,13 +327,25 @@ const router = useRouter();
         align-items: center;
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 
+        .edit {
+          height: 100%;
+          aspect-ratio: 1;
+          span {
+            @extend %click-able;
+            @extend %button-like;
+            color: $color-primary;
+            padding: .25rem;
+            vertical-align: center;
+          }
+        }
+
         .delete {
           height: 100%;
           aspect-ratio: 1;
           span {
             @extend %click-able;
             @extend %button-like;
-            color: #ff7875;
+            color: $color-danger;
             padding: .25rem;
             vertical-align: center;
           }

@@ -34,6 +34,7 @@ export async function uploadFileUsingPost(
       'Content-Type': 'multipart/form-data',
     },
     data: body,
+    timeout: 1000 * 60 * 10,
     ...(options),
   });
 }
