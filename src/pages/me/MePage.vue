@@ -19,8 +19,8 @@ onMounted(() => {
 });
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
-const posts = ref<PostItemCardProps[]>([]); // 所有的帖子
-// const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
+const origin_posts = ref<PostItemCardProps[]>([]); // 所有的帖子
+const posts = ref([]); // 要显示的帖子
 const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
 
@@ -186,7 +186,7 @@ const newPwd = ref('');
 const confirmPwd = ref('');
 const newPwdTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
 const confirmTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
-const confirmed = ref(false); // 是否确认密码
+const confirmed = ref(true); // 是否确认密码
 
 const infoString = ref(localStorage.getItem('info'));
 let gender = ref(''); // 性别
@@ -203,13 +203,14 @@ watch(() => newPwd.value, (newValue) => {
       element.style.color = '#9E9E9EFF';
     }
   } else if (newValue.length < 6 || newValue.length > 30) {
+    confirmed.value = false;
     newPwdTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
     let element = document.getElementById('newPwdTip');
     if (element) {
       element.style.color = 'red';
     }
   } else {
-    newPwdTip.value = '密码格式正确。';
+    newPwdTip.value = '✅ 密码格式正确。';
     let element = document.getElementById('newPwdTip');
     if (element) {
       element.style.color = '#9E9E9EFF';
@@ -218,13 +219,24 @@ watch(() => newPwd.value, (newValue) => {
   
   // 匹配一致后修改newPwd
   if (newValue !== confirmPwd.value) {
-    confirmTip.value = '两次密码不一致，请重新输入。';
-    let element = document.getElementById('confirmTip');
-    if (element) {
-      element.style.color = 'red';
+    if (confirmPwd.value.length === 0) {
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    } else {
+      confirmTip.value = '❌ 两次密码不一致，请重新输入。';
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = 'red';
+      }
     }
+    confirmed.value = false;
   } else {
-    confirmTip.value = '密码一致。';
+    if (newValue.length === 0 && confirmPwd.value.length === 0) {
+      confirmed.value = true;
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    } else {
+      confirmTip.value = '✅ 密码一致。';
+      confirmed.value = false;
+    }
     confirmed.value = true;
     let element = document.getElementById('confirmTip');
     if (element) {
@@ -236,23 +248,34 @@ watch(() => newPwd.value, (newValue) => {
 // 实时匹配密码
 watch(() => confirmPwd.value, (newValue) => {
   if (newValue.length === 0) {
+    confirmed.value = newPwd.value.length === 0;
     confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
     let element = document.getElementById('confirmTip');
     if (element) {
       element.style.color = '#9E9E9EFF';
     }
   } else if (newValue !== newPwd.value) {
-    confirmTip.value = '两次密码不一致，请重新输入。';
+    confirmTip.value = '❌ 两次密码不一致，请重新输入。';
+    confirmed.value = false;
     let element = document.getElementById('confirmTip');
     if (element) {
       element.style.color = 'red';
     }
   } else {
-    confirmTip.value = '密码一致。';
-    confirmed.value = true;
-    let element = document.getElementById('confirmTip');
-    if (element) {
-      element.style.color = '#9E9E9EFF';
+    if (newValue.length < 6 || newValue.length > 30) {
+      confirmed.value = false;
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = 'red';
+      }
+    } else {
+      confirmTip.value = '✅ 密码一致。';
+      confirmed.value = true;
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = '#9E9E9EFF';
+      }
     }
   }
 });
@@ -289,12 +312,38 @@ function edit() {
     gender.value = infoArray.find(item => 'gender' in item)?.gender;
     if (gender.value == 'male') {
       maleColor.value = '#adb7ff';
+      femaleColor.value = '#F5F5F5FF';
     } else {
+      maleColor.value = '#F5F5F5FF';
       femaleColor.value = '#efcaff';
     }
     birthday.value = infoArray.find(item => 'birthday' in item)?.birthday;
     selectedAddress.value = infoArray.find(item => 'selectedAddress' in item)?.selectedAddress;
     signature.value = infoArray.find(item => 'signature' in item)?.signature;
+  }
+}
+
+const show = ref(0);
+
+// todo 显示我的帖子
+function showMyPosts() {
+  changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
+  changeBorderBottomColor('me-main-involved', 'transparent');
+  show.value = 0;
+}
+
+// todo 显示我参与的
+function showInvolved() {
+  changeBorderBottomColor('me-main-involved', '#5C6BC0FF');
+  changeBorderBottomColor('me-main-myPost', 'transparent');
+  show.value = 1;
+
+}
+
+function changeBorderBottomColor(elementId: string, color: string) {
+  let element = document.getElementById(elementId);
+  if (element) {
+    element.style.borderBottom = `2px solid ${color}`;
   }
 }
 
@@ -323,7 +372,7 @@ function changeAvatar() {
         console.log('upload avatar');
         console.log(file);
         let res = await userStore.uploadAvatar(file);
-        console.log(res);
+        if (res) console.log('upload avatar success');
         let reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (e) => {
@@ -340,7 +389,11 @@ function changeAvatar() {
 }
 
 // 保存修改
-function save() {
+async function save() {
+  console.log(confirmed.value);
+  if (confirmed.value === false) {
+    return;
+  }
   let infoArray = [
     {
       nickname: nickname.value,
@@ -349,7 +402,13 @@ function save() {
       selectedAddress: selectedAddress.value,
       signature: signature.value,
     }];
-  userStore.userInfo.name = nickname.value;
+  let res = await userStore.saveName(nickname.value);
+  if (res) console.log('save name');
+  if (confirmed.value === true && newPwd.value.length !== 0) {
+    console.log('save new password');
+    let res = await userStore.savePassword(newPwd.value);
+    if (res) console.log('save new password success');
+  }
   let infoString = JSON.stringify(infoArray);
   localStorage.setItem('info', infoString);
   window.location.reload();
@@ -388,8 +447,8 @@ const globe = useGlobal(); // 小屏适配
       <main v-if = "!editing" id = "me-posts" class = "me-main">
         <section class = "me-main-actions">
           <div class = "me-main-actions-title">
-            <CusButton id = "me-main-myPost" text = "我的帖子" type = "text"></CusButton>
-            <CusButton id = "me-main-involved" text = "我参与的" type = "text"></CusButton>
+            <CusButton id = "me-main-myPost" text = "我的帖子" type = "text" @click = "showMyPosts"></CusButton>
+            <CusButton id = "me-main-involved" text = "我参与的" type = "text" @click = "showInvolved"></CusButton>
           </div>
         </section>
         <section class = "me-main-posts">
@@ -500,7 +559,7 @@ const globe = useGlobal(); // 小屏适配
               </div>
             </div>
             <div class = "me-main-edit-form-bar">
-              <CusButton text = "保存" type = "success" @click = "save"></CusButton>
+              <CusButton text = "保存" type = "success" @click = "save" @click.stop = "!confirmed"></CusButton>
               <CusButton text = "取消" type = "danger" @click = "reset"></CusButton>
             </div>
           </form>
@@ -650,6 +709,15 @@ const globe = useGlobal(); // 小屏适配
         font-weight: normal;
         color: $color-primary;
         display: flex;
+        border-top: 2px solid transparent;
+        
+        #me-main-myPost {
+          border-bottom: 2px solid $color-primary;
+        }
+        
+        #me-main-involved {
+          border-bottom: 2px solid transparent;
+        }
       }
     }
     
