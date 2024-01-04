@@ -79,6 +79,7 @@ function handleAudioSelect() {
 }
 
 const publishForm = reactive({
+  edit: ref(false),
   pid: ref(1),
   topic: ref(''),
   title: ref(''),
@@ -87,6 +88,7 @@ const publishForm = reactive({
   videos: ref<VideoPickerModel>([]),
   audios: ref<AudioPickerModel>([]),
 });
+const publishButtonText = ref('发布');
 
 const posts = ref<PostItemCardProps[]>([]);
 const currentPage = ref(0); // 首页为1，但是handleLoadMore会先+1，所以初始值为0
@@ -194,6 +196,7 @@ async function handlePublishPost() {
   uploading.value = true;
   try {
     // 上传视频
+    publishButtonText.value = '上传视频';
     if (publishForm.videos.length > 0) {
       for (const item of publishForm.videos) {
         const formData = new FormData();
@@ -208,19 +211,21 @@ async function handlePublishPost() {
       }
     }
     // 上传音频
+    publishButtonText.value = '上传音频';
     if (publishForm.audios.length > 0) {
       for (const item of publishForm.audios) {
         const formData = new FormData();
         formData.append('file', item.file);
         const res = await adminApi.updatesControllerFix.uploadFileUsingPost(formData);
         if (res.data?.code == 200) {
-          publishForm.content += `[audios:${res.data.data}]`;
+          publishForm.content += `[audio:${res.data.data}]`;
         } else {
           ToastManager.danger(`上传音频失败：${res.data?.message}`);
           break;
         }
       }
     }
+    publishButtonText.value = '上传图片';
     await delay(1000);
     // 创建 FormData 对象
     const formData = new FormData();
@@ -256,6 +261,7 @@ async function handlePublishPost() {
     showToast({ type: 'danger', text: '发布失败' });
   } finally {
     uploading.value = false;
+    publishButtonText.value = '发布';
   }
 }
 
@@ -445,7 +451,7 @@ const globe = useGlobal();
               <CusButton style="margin-left: auto;" type="text" background-color="#00000000" font-color="#0000005F" @click="handleClearClick" :disabled="uploading" text="清空"></CusButton>
               <span class="length-tip">{{ publishForm.content.length }} / {{ MAX_CONTENT_LENGTH }}</span>
 <!--              <div class="action"><span class="icon"><setting-one theme="outline"/></span></div>-->
-              <CusButton type="primary" @click="handlePublishPost" :disabled="uploading" text="发布"><Spinning :show="uploading" /></CusButton>
+              <CusButton type="primary" @click="handlePublishPost" :disabled="uploading" :text="publishButtonText"><Spinning :show="uploading" /></CusButton>
             </div>
           </div>
         </section>
@@ -453,7 +459,7 @@ const globe = useGlobal();
           <div v-if="searchForm.keyword" class="load-more">
             <span @click="router.replace('/post')"><Left />{{ '返回' }}</span>
             <div style="flex: 1;"></div>
-            <span>“{{ searchForm.keyword }}” 的搜索结果（共{{ posts.length }}个）</span>
+            <span>“{{ decodeURIComponent(searchForm.keyword) }}” 的搜索结果（共{{ posts.length }}个）</span>
           </div>
           <PostItemCard class="post-item" v-for="item in posts" :key="item.postId"
                         :type="item.type ?? 'post'"
