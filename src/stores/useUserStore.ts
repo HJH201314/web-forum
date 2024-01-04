@@ -35,6 +35,13 @@ const useUserStore = defineStore('user', () => {
       userInfoStorage.value = res.data.data ?? {};
       avatar.value = convertUserFile(res.data.data?.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${res.data.data?.id}`;
       userInfoStorage.value.avatar = avatar.value;
+      // 使用公共用户信息接口更新头像，避免登录缓存问题
+      getUserInfo(userInfo.value.id!).then(res => {
+        if (res.avatar !== userInfo.value.avatar) {
+          userInfoStorage.value.avatar = convertUserFile(res.avatar);
+          avatar.value = convertUserFile(res.avatar);
+        }
+      });
       console.log('avatar', avatar.value);
       console.log('user_info', userInfoStorage.value);
     } catch (e) {

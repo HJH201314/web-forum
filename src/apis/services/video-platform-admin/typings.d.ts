@@ -278,7 +278,14 @@ declare namespace API {
     url: string;
   };
 
-  type getInPageUsingGETParams = {
+  type getInPageUsingPOSTParams = {
+    /** 页码 */
+    pageNum: number;
+    /** 每页大小 */
+    pageSize: number;
+  };
+
+  type getTakePartInByPageUsingPostParams = {
     /** 页码 */
     pageNum: number;
     /** 每页大小 */

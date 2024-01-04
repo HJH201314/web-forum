@@ -329,6 +329,12 @@ function edit() {
   }
 }
 
+watch(() => userStore.isLogin, (newValue) => {
+  if (!newValue) {
+    router.replace('/post');
+  }
+});
+
 const show = ref(0);
 
 // todo 显示我的帖子
@@ -343,18 +349,30 @@ const searchForm = reactive({
   keyword: ref(''),
 });
 function showMyPosts() {
-  changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
-  changeBorderBottomColor('me-main-involved', 'transparent');
-  show.value = 0;
-  console.log(myPosts.value);
+  if (show.value == 1) {
+    changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
+    changeBorderBottomColor('me-main-involved', 'transparent');
+    show.value = 0;
+    myPosts.value = [];
+    currentPage.value = 0;
+    hasNoMore.value = false;
+    handleLoadMore();
+    console.log(myPosts.value);
+  }
 }
 
 // todo 显示我参与的
 
 function showInvolved() {
-  changeBorderBottomColor('me-main-involved', '#5C6BC0FF');
-  changeBorderBottomColor('me-main-myPost', 'transparent');
-  show.value = 1;
+  if (show.value == 0) {
+    changeBorderBottomColor('me-main-involved', '#5C6BC0FF');
+    changeBorderBottomColor('me-main-myPost', 'transparent');
+    show.value = 1;
+    myPosts.value = [];
+    currentPage.value = 0;
+    hasNoMore.value = false;
+    handleLoadMore();
+  }
 
 }
 
@@ -386,20 +404,37 @@ async function handleLoadMore() {
 // 获取帖子
 async function getPosts() {
   try {
-    const res = await adminApi.updatesController.getInPageUsingPost({
-      pageNum: currentPage.value,
-      pageSize: 10,
-    }, {
-      uid: userStore.userInfo?.id,
-      str: searchForm.keyword ? searchForm.keyword : undefined,
-    });
-    if (res.data.data?.length == 0) {
-      showToast({ type: 'info', text: '没有更多啦' });
-      hasNoMore.value = true;
+    let res: any;
+    if (show.value == 0) {
+      res = await adminApi.updatesController.getInPageUsingPost({
+        pageNum: currentPage.value,
+        pageSize: 10,
+      }, {
+        uid: userStore.userInfo?.id,
+        str: searchForm.keyword ? searchForm.keyword : undefined,
+      });
+    } else if (show.value == 1) {
+      res = await adminApi.updatesController.getTakePartInByPageUsingPost({
+        pageNum: currentPage.value,
+        pageSize: 10,
+      }, {
+        uid: userStore.userInfo?.id,
+        str: searchForm.keyword ? searchForm.keyword : undefined,
+      });
     }
-    postResult.value = res.data.data;
-    return res.data.data;
+    if (res.data?.code == 200) {
+      if (res.data.data?.length == 0) {
+        showToast({ type: 'info', text: '没有更多啦' });
+        hasNoMore.value = true;
+      }
+      postResult.value = res.data.data;
+      return res.data.data;
+    } else {
+      hasNoMore.value = true;
+      return [];
+    }
   } catch (e) {
+    hasNoMore.value = true;
     return [];
   }
 }

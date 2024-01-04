@@ -30,6 +30,7 @@ type Entry = {
   name: string;
   icon?: string;
   href?: string;
+  login?: boolean;
   onClick?: () => void;
 };
 /* 左侧列表 */
@@ -42,14 +43,15 @@ const leftEntries = ref<Entry[]>([
   },
 ]);
 /* 右侧列表 */
-const rightEntries = ref<Entry[]>([
+const rightEntries = computed<Entry[]>(() => [
   {
     key: "me",
     name: "个人中心",
     icon: 'winking-face',
     href: "/me",
+    login: true,
   },
-]);
+].filter((entry) => !entry.login || userStore.isLogin));
 
 const router = useRouter();
 function handleEntryClick(e: Event, entry: Entry) {
@@ -222,7 +224,7 @@ const globe = useGlobal();
     <header ref="headerRef" :style="headerStyle">
       <ul class="left-entry">
         <li style="display: flex;" @click="router.replace('/')"><img src="/x-logo-reverse.png" alt="logo" style="height: 1.25rem; object-fit: cover;" /></li>
-        <li v-for="entry in leftEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
+        <li style="margin-left: .25rem" v-for="entry in leftEntries" :key="entry.key" @click="(e) => handleEntryClick(e, entry)">
           <CusPopover position="bottom">
             <template #body>
               <div style="display: flex; flex-direction: row; align-items: center; gap: .25rem;">
@@ -288,8 +290,6 @@ const globe = useGlobal();
         </template>
         <template #popover>
           <div class="nav-user-actions">
-            <CusButton class="nav-user-action" :button-style="{'border-radius': '0'}" @click="handleLogoutClick" text="修改昵称"></CusButton>
-            <CusButton class="nav-user-action" :button-style="{'border-radius': '0'}" @click="handleChangePassword" text="修改密码"></CusButton>
             <CusButton class="nav-user-action" :button-style="{'border-radius': '0'}" @click="handleLogoutClick" text="登出账号"></CusButton>
           </div>
         </template>
