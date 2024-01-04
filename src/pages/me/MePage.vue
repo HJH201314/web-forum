@@ -3,7 +3,7 @@ import useUserStore from '@/stores/useUserStore';
 import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import CusButton from '@/components/button/CusButton.vue';
 import PostItemCard from '@/pages/post/components/PostItemCard.vue';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import CusInput from '@/components/input/CusInput.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -440,6 +440,50 @@ watch(() => postResult.value, async () => {
   postResult.value = []; // 处理完成后清空
 });
 
+const userPostCount = ref(0);
+const userLikeCount = ref(0);
+const userPoint = computed(() => {
+  return userPostCount.value * 100 + userLikeCount.value * 8;
+});
+const userLevelName = computed(() => {
+  if (userPoint.value < 1000) {
+    return '初来乍到';
+  } else if (userPoint.value < 5000) {
+    return '小有名气';
+  } else if (userPoint.value < 15000) {
+    return '名声显赫';
+  } else {
+    return '大名鼎鼎';
+  }
+});
+
+// 检测用户id，获取用户帖子信息
+watch(() => userStore.userInfo?.id, async (newVal) => {
+  if (newVal != undefined) {
+    try {
+      const res = await adminApi.updatesController.countUpdatesUsingGet({
+        uid: newVal,
+      });
+      if (res.data?.code == 200) {
+        userPostCount.value = res.data.data ?? 0;
+      }
+    } catch (e) {
+      // ignore
+    }
+    try {
+      const res = await adminApi.userInfoController.getLikeCountByUidUsingGet({
+        uid: newVal,
+      });
+      if (res.data?.code == 200) {
+        userLikeCount.value = res.data.data ?? 0;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+}, { immediate: true });
+
+
 // 修改头像
 function changeAvatar() {
   let element = document.getElementById('change-avatar');
@@ -511,12 +555,12 @@ const globe = useGlobal(); // 小屏适配
             <div class = "avatar"><img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
             </div>
             <div class = "info"><span class = "username">{{ userStore.userInfo?.name ?? '匿名用户' }}</span><br /><span
-              class = "vip">初级用户</span></div>
+              class = "vip">{{userLevelName}}</span></div>
           </div>
           <div class = "stats">
-            <div id = "me-left-user-follow" class = "stats-item"><span>{{ 1024 }}</span><span>成长值</span></div>
-            <div id = "me-left-user-fans" class = "stats-item"><span>{{ 11 }}</span><span>帖子</span></div>
-            <div id = "me-left-user-likes" class = "stats-item"><span>{{ 666 }}</span><span>点赞</span></div>
+            <div id = "me-left-user-follow" class = "stats-item"><span>{{ userPoint }}</span><span>成长值</span></div>
+            <div id = "me-left-user-fans" class = "stats-item"><span>{{ userPostCount }}</span><span>帖子</span></div>
+            <div id = "me-left-user-likes" class = "stats-item"><span>{{ userLikeCount }}</span><span>点赞</span></div>
           </div>
         </section>
         <section class = "me-left-edit" @click = "() => editing ? editing = false : edit()">
