@@ -2,26 +2,32 @@
 import useUserStore from '@/stores/useUserStore';
 import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import CusButton from '@/components/button/CusButton.vue';
-import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
 import PostItemCard from '@/pages/post/components/PostItemCard.vue';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import CusInput from '@/components/input/CusInput.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { useRouter } from 'vue-router';
 import useGlobal from '@/commands/useGlobal';
+import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
+import { delay } from '@/utils/delay';
+import adminApi from '@/apis/services/video-platform-admin';
+import showToast from '@/components/toast/toast';
+import { useIntersectionObserver } from '@vueuse/core';
+import { getUserInfo } from '@/stores/publicUserInfo';
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const router = useRouter();
+// todo 进入时加载
 onMounted(() => {
   if (router.currentRoute.value.path == '/me/edit') {
     editing.value = true;
+  } else {
+    observeLoadMore.resume();
   }
 });
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
-const posts = ref<PostItemCardProps[]>([]); // 所有的帖子
-// const myPosts = posts.value.filter(item => item.userId == userStore.userInfo?.id); // 过滤出用户的帖子
-const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
 
 watch(() => editing.value, (newValue) => {
@@ -186,7 +192,7 @@ const newPwd = ref('');
 const confirmPwd = ref('');
 const newPwdTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
 const confirmTip = ref('请输入6-30位密码，至少包含数字、英文字母和符号。');
-const confirmed = ref(false); // 是否确认密码
+const confirmed = ref(true); // 是否确认密码
 
 const infoString = ref(localStorage.getItem('info'));
 let gender = ref(''); // 性别
@@ -203,13 +209,14 @@ watch(() => newPwd.value, (newValue) => {
       element.style.color = '#9E9E9EFF';
     }
   } else if (newValue.length < 6 || newValue.length > 30) {
+    confirmed.value = false;
     newPwdTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
     let element = document.getElementById('newPwdTip');
     if (element) {
       element.style.color = 'red';
     }
   } else {
-    newPwdTip.value = '密码格式正确。';
+    newPwdTip.value = '✅ 密码格式正确。';
     let element = document.getElementById('newPwdTip');
     if (element) {
       element.style.color = '#9E9E9EFF';
@@ -218,13 +225,24 @@ watch(() => newPwd.value, (newValue) => {
   
   // 匹配一致后修改newPwd
   if (newValue !== confirmPwd.value) {
-    confirmTip.value = '两次密码不一致，请重新输入。';
-    let element = document.getElementById('confirmTip');
-    if (element) {
-      element.style.color = 'red';
+    if (confirmPwd.value.length === 0) {
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    } else {
+      confirmTip.value = '❌ 两次密码不一致，请重新输入。';
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = 'red';
+      }
     }
+    confirmed.value = false;
   } else {
-    confirmTip.value = '密码一致。';
+    if (newValue.length === 0 && confirmPwd.value.length === 0) {
+      confirmed.value = true;
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+    } else {
+      confirmTip.value = '✅ 密码一致。';
+      confirmed.value = false;
+    }
     confirmed.value = true;
     let element = document.getElementById('confirmTip');
     if (element) {
@@ -236,23 +254,34 @@ watch(() => newPwd.value, (newValue) => {
 // 实时匹配密码
 watch(() => confirmPwd.value, (newValue) => {
   if (newValue.length === 0) {
+    confirmed.value = newPwd.value.length === 0;
     confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
     let element = document.getElementById('confirmTip');
     if (element) {
       element.style.color = '#9E9E9EFF';
     }
   } else if (newValue !== newPwd.value) {
-    confirmTip.value = '两次密码不一致，请重新输入。';
+    confirmTip.value = '❌ 两次密码不一致，请重新输入。';
+    confirmed.value = false;
     let element = document.getElementById('confirmTip');
     if (element) {
       element.style.color = 'red';
     }
   } else {
-    confirmTip.value = '密码一致。';
-    confirmed.value = true;
-    let element = document.getElementById('confirmTip');
-    if (element) {
-      element.style.color = '#9E9E9EFF';
+    if (newValue.length < 6 || newValue.length > 30) {
+      confirmed.value = false;
+      confirmTip.value = '请输入6-30位密码，至少包含数字、英文字母和符号。';
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = 'red';
+      }
+    } else {
+      confirmTip.value = '✅ 密码一致。';
+      confirmed.value = true;
+      let element = document.getElementById('confirmTip');
+      if (element) {
+        element.style.color = '#9E9E9EFF';
+      }
     }
   }
 });
@@ -289,7 +318,9 @@ function edit() {
     gender.value = infoArray.find(item => 'gender' in item)?.gender;
     if (gender.value == 'male') {
       maleColor.value = '#adb7ff';
+      femaleColor.value = '#F5F5F5FF';
     } else {
+      maleColor.value = '#F5F5F5FF';
       femaleColor.value = '#efcaff';
     }
     birthday.value = infoArray.find(item => 'birthday' in item)?.birthday;
@@ -298,19 +329,116 @@ function edit() {
   }
 }
 
+const show = ref(0);
+
+// todo 显示我的帖子
+// todo 进入时即加载
+
+const myPosts = ref<PostItemCardProps[]>([]); // 要显示的帖子
+const postResult = ref<API.UpdateVo[]>(); // 中间值
+const hasNoMore = ref(false); // 是否还有更多帖子
+const currentPage = ref(0); // 当前页数
+const searchForm = reactive({
+  uid: ref(-1),
+  keyword: ref(''),
+});
+function showMyPosts() {
+  changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
+  changeBorderBottomColor('me-main-involved', 'transparent');
+  show.value = 0;
+  console.log(myPosts.value);
+}
+
+// todo 显示我参与的
+
+function showInvolved() {
+  changeBorderBottomColor('me-main-involved', '#5C6BC0FF');
+  changeBorderBottomColor('me-main-myPost', 'transparent');
+  show.value = 1;
+
+}
+
+function changeBorderBottomColor(elementId: string, color: string) {
+  let element = document.getElementById(elementId);
+  if (element) {
+    element.style.borderBottom = `2px solid ${color}`;
+  }
+}
+
 // todo 删除帖子
 function handlePostDeleted(id: number) {
-  posts.value.forEach((item, index) => {
+  myPosts.value.forEach((item, index) => {
     if (item.postId == id) {
-      posts.value.splice(index, 1);
+      myPosts.value.splice(index, 1);
     }
   });
 }
 
 // todo 加载更多
-function handleLoadMore() {
-
+async function handleLoadMore() {
+  currentPage.value++;
+  await getPosts();
+  await delay(100);
+  observeLoadMore.pause();
+  observeLoadMore.resume();
 }
+
+// 获取帖子
+async function getPosts() {
+  try {
+    const res = await adminApi.updatesController.getInPageUsingPost({
+      pageNum: currentPage.value,
+      pageSize: 10,
+    }, {
+      uid: userStore.userInfo?.id,
+      str: searchForm.keyword ? searchForm.keyword : undefined,
+    });
+    if (res.data.data?.length == 0) {
+      showToast({ type: 'info', text: '没有更多啦' });
+      hasNoMore.value = true;
+    }
+    postResult.value = res.data.data;
+    return res.data.data;
+  } catch (e) {
+    return [];
+  }
+}
+
+/* 无限加载控制 */
+const loadMoreRef = ref<HTMLDivElement>();
+const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting }]) => {
+  if (isIntersecting) {
+    console.log(currentPage.value);
+    handleLoadMore();
+  }
+}, {
+  threshold: 0,
+  immediate: false,
+});
+
+// 监听tempPost的变化
+watch(() => postResult.value, async () => {
+  if (!postResult.value?.length) return;
+  for (let item of postResult.value) {
+    if (item.vid) continue; // 此处不处理视频
+    const userInfo = await getUserInfo(item.uid ?? -1);
+    myPosts.value.push({
+      type: 'post',
+      postId: item.id ?? -1,
+      userId: item.uid ?? -1,
+      userName: userInfo.name ?? '测试用户',
+      avatar: convertUserFile(userInfo.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.uid}`,
+      forwardCount: 0,
+      commentCount: 0,
+      likeCount: 0,
+      isLiked: item.isLiked ?? false,
+      createTime: item.uploadTime ? new Date(item.uploadTime).toLocaleString() : new Date().toLocaleString(),
+      images: JSON.parse(item.urls ?? '[]'),
+      content: item.content ? decodeURIComponent(item.content) : '',
+    });
+  }
+  postResult.value = []; // 处理完成后清空
+});
 
 // 修改头像
 function changeAvatar() {
@@ -323,7 +451,7 @@ function changeAvatar() {
         console.log('upload avatar');
         console.log(file);
         let res = await userStore.uploadAvatar(file);
-        console.log(res);
+        if (res) console.log('upload avatar success');
         let reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (e) => {
@@ -340,7 +468,11 @@ function changeAvatar() {
 }
 
 // 保存修改
-function save() {
+async function save() {
+  console.log(confirmed.value);
+  if (confirmed.value === false) {
+    return;
+  }
   let infoArray = [
     {
       nickname: nickname.value,
@@ -349,7 +481,13 @@ function save() {
       selectedAddress: selectedAddress.value,
       signature: signature.value,
     }];
-  userStore.userInfo.name = nickname.value;
+  let res = await userStore.saveName(nickname.value);
+  if (res) console.log('save name');
+  if (confirmed.value === true && newPwd.value.length !== 0) {
+    console.log('save new password');
+    let res = await userStore.savePassword(newPwd.value);
+    if (res) console.log('save new password success');
+  }
   let infoString = JSON.stringify(infoArray);
   localStorage.setItem('info', infoString);
   window.location.reload();
@@ -388,12 +526,12 @@ const globe = useGlobal(); // 小屏适配
       <main v-if = "!editing" id = "me-posts" class = "me-main">
         <section class = "me-main-actions">
           <div class = "me-main-actions-title">
-            <CusButton id = "me-main-myPost" text = "我的帖子" type = "text"></CusButton>
-            <CusButton id = "me-main-involved" text = "我参与的" type = "text"></CusButton>
+            <CusButton id = "me-main-myPost" text = "我的帖子" type = "text" @click = "showMyPosts"></CusButton>
+            <CusButton id = "me-main-involved" text = "我参与的" type = "text" @click = "showInvolved"></CusButton>
           </div>
         </section>
         <section class = "me-main-posts">
-          <PostItemCard v-for = "item in posts" :key = "item.postId" :avatar = "item.avatar"
+          <PostItemCard v-for = "item in myPosts" :key = "item.postId" :avatar = "item.avatar"
                         :comment-count = "item.commentCount"
                         :content = "item.content"
                         :create-time = "item.createTime"
@@ -500,7 +638,7 @@ const globe = useGlobal(); // 小屏适配
               </div>
             </div>
             <div class = "me-main-edit-form-bar">
-              <CusButton text = "保存" type = "success" @click = "save"></CusButton>
+              <CusButton text = "保存" type = "success" @click = "save" @click.stop = "!confirmed"></CusButton>
               <CusButton text = "取消" type = "danger" @click = "reset"></CusButton>
             </div>
           </form>
@@ -650,6 +788,15 @@ const globe = useGlobal(); // 小屏适配
         font-weight: normal;
         color: $color-primary;
         display: flex;
+        border-top: 2px solid transparent;
+        
+        #me-main-myPost {
+          border-bottom: 2px solid $color-primary;
+        }
+        
+        #me-main-involved {
+          border-bottom: 2px solid transparent;
+        }
       }
     }
     
