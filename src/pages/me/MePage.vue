@@ -334,9 +334,8 @@ const show = ref(0);
 // todo 显示我的帖子
 // todo 进入时即加载
 
-const origin_posts = ref<PostItemCardProps[]>([]); // 所有的帖子
-const posts = ref<PostItemCardProps[]>([]); // 要显示的帖子
-const tempPosts = ref<API.UpdateVo[]>(); // 中间值
+const myPosts = ref<PostItemCardProps[]>([]); // 要显示的帖子
+const postResult = ref<API.UpdateVo[]>(); // 中间值
 const hasNoMore = ref(false); // 是否还有更多帖子
 const currentPage = ref(0); // 当前页数
 const searchForm = reactive({
@@ -347,7 +346,7 @@ function showMyPosts() {
   changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
   changeBorderBottomColor('me-main-involved', 'transparent');
   show.value = 0;
-  console.log(origin_posts.value);
+  console.log(myPosts.value);
 }
 
 // todo 显示我参与的
@@ -368,9 +367,9 @@ function changeBorderBottomColor(elementId: string, color: string) {
 
 // todo 删除帖子
 function handlePostDeleted(id: number) {
-  posts.value.forEach((item, index) => {
+  myPosts.value.forEach((item, index) => {
     if (item.postId == id) {
-      posts.value.splice(index, 1);
+      myPosts.value.splice(index, 1);
     }
   });
 }
@@ -398,7 +397,7 @@ async function getPosts() {
       showToast({ type: 'info', text: '没有更多啦' });
       hasNoMore.value = true;
     }
-    tempPosts.value = res.data.data;
+    postResult.value = res.data.data;
     return res.data.data;
   } catch (e) {
     return [];
@@ -418,12 +417,12 @@ const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting 
 });
 
 // 监听tempPost的变化
-watch(() => tempPosts.value, async () => {
-  if (!tempPosts.value?.length) return;
-  for (let item of tempPosts.value) {
+watch(() => postResult.value, async () => {
+  if (!postResult.value?.length) return;
+  for (let item of postResult.value) {
     if (item.vid) continue; // 此处不处理视频
     const userInfo = await getUserInfo(item.uid ?? -1);
-    origin_posts.value.push({
+    myPosts.value.push({
       type: 'post',
       postId: item.id ?? -1,
       userId: item.uid ?? -1,
@@ -438,7 +437,7 @@ watch(() => tempPosts.value, async () => {
       content: item.content ? decodeURIComponent(item.content) : '',
     });
   }
-  tempPosts.value = []; // 处理完成后清空
+  postResult.value = []; // 处理完成后清空
 });
 
 // 修改头像
@@ -532,7 +531,7 @@ const globe = useGlobal(); // 小屏适配
           </div>
         </section>
         <section class = "me-main-posts">
-          <PostItemCard v-for = "item in posts" :key = "item.postId" :avatar = "item.avatar"
+          <PostItemCard v-for = "item in myPosts" :key = "item.postId" :avatar = "item.avatar"
                         :comment-count = "item.commentCount"
                         :content = "item.content"
                         :create-time = "item.createTime"
