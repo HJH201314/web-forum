@@ -348,6 +348,7 @@ const searchForm = reactive({
   uid: ref(-1),
   keyword: ref(''),
 });
+
 function showMyPosts() {
   if (show.value == 1) {
     changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
@@ -373,7 +374,7 @@ function showInvolved() {
     hasNoMore.value = false;
     handleLoadMore();
   }
-
+  
 }
 
 function changeBorderBottomColor(elementId: string, color: string) {
@@ -579,6 +580,24 @@ function reset() {
 
 
 const globe = useGlobal(); // 小屏适配
+
+
+// 邮箱
+const oldEmail = ref(userStore.userInfo?.email);
+const hasEmail = ref(oldEmail.value);
+const newEmail = ref('');
+const code = ref('');
+const sended = ref(false);
+
+function handleSendEmail() {
+  if (newEmail.value.length === 0) return;
+  sended.value = true;
+  userStore.sendPin('email', newEmail.value);
+}
+
+// watch(() => code, (newValue)=> {
+//   if (code === )
+// });
 </script>
 
 <template>
@@ -590,7 +609,7 @@ const globe = useGlobal(); // 小屏适配
             <div class = "avatar"><img :src = "userStore.avatar ?? DEFAULT_USER_AVATAR" alt = "me-user-avatar" />
             </div>
             <div class = "info"><span class = "username">{{ userStore.userInfo?.name ?? '匿名用户' }}</span><br /><span
-              class = "vip">{{userLevelName}}</span></div>
+              class = "vip">{{ userLevelName }}</span></div>
           </div>
           <div class = "stats">
             <div id = "me-left-user-follow" class = "stats-item"><span>{{ userPoint }}</span><span>成长值</span></div>
@@ -704,6 +723,14 @@ const globe = useGlobal(); // 小屏适配
               </div>
             </div>
             <div class = "me-main-edit-form-bar">
+              <div class = "email">
+                <span class = "title">{{ hasEmail ? '修改' : '绑定' }}邮箱</span>
+                <CusInput v-model = "newEmail" :placeholder = "oldEmail?.valueOf? oldEmail : '请输入邮箱'"></CusInput>
+                <CusInput v-if = "sended" v-model = "code" placeholder = "请输入验证码"></CusInput>
+                <CusButton class = "send" text = "发送验证码" type = "primary" @click = "handleSendEmail"></CusButton>
+              </div>
+            </div>
+            <div class = "me-main-edit-form-bar">
               <div class = "password">
                 <span class = "title">修改密码</span>
                 <span>新密码</span>
@@ -735,6 +762,7 @@ const globe = useGlobal(); // 小屏适配
   //display: flex;
   
   &-container {
+    max-width: 1720px;
     position: relative;
     margin: 0 auto;
     padding: 1rem;
@@ -754,7 +782,7 @@ const globe = useGlobal(); // 小屏适配
   &-left {
     position: sticky;
     top: 4.5rem;
-    //width: 30%;
+    //width: 20%;
     height: 100%;
     display: flex;
     flex: 1;
@@ -946,6 +974,22 @@ const globe = useGlobal(); // 小屏适配
           flex-direction: row;
           //position: relative;
           gap: .5rem;
+          
+          .email {
+            display: flex;
+            flex-direction: column;
+            
+            .title {
+              font-size: 1.1rem;
+              font-weight: bold;
+              display: flex;
+            }
+            
+            .send {
+              width: 15%;
+              
+            }
+          }
           
           .gender {
             display: flex;
