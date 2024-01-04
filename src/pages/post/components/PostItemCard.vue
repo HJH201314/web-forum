@@ -16,6 +16,7 @@ import { DialogManager } from '@/components/dialog';
 import CusPopover from '@/components/popover/CusPopover.vue';
 import CusButton from '@/components/button/CusButton.vue';
 import { useRouter } from 'vue-router';
+import ToastManager from '@/components/toast/ToastManager';
 
 const props = withDefaults(defineProps<PostItemCardProps>(), {
   type: 'post',
@@ -141,7 +142,8 @@ function handleEditPost() {
     showToast({ text: '别改别人的啊', type: 'danger' });
     return;
   }
-  router.push(`/post/edit/${props.postId}`);
+  // router.push(`/post/edit/${props.postId}`);
+  ToastManager.normal('开弓没有回头箭~');
 }
 
 function handleDeletePost() {

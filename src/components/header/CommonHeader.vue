@@ -111,7 +111,7 @@ async function handleChangePassword() {
 }
 
 function handleMeClick() {
-  showToast({text: userStore.userInfo, position: 'top', duration: 'long'});
+  // showToast({text: userStore.userInfo, position: 'top', duration: 'long'});
   if (userStore.isLogin) {
     router.push('/me');
   }
@@ -479,6 +479,8 @@ header {
   }
 
   &-actions {
+    box-shadow: $box-shadow;
+    margin-right: 3rem;
     display: flex;
     flex-direction: column;
     border-radius: .5rem;

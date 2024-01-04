@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import EasyTyper from 'easy-typer-js';
-import { nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { Close, Right, Switch, Mail, Phone } from "@icon-park/vue-next";
 import CommonModal from "@/components/modal/CommonModal.vue";
 import type { CommonModalFunc } from "@/components/modal/CommonModal";
@@ -246,6 +246,12 @@ watch(() => userStore.isLogin, (v) => {
 });
 
 const router = useRouter();
+
+const protocolPath = computed(() => router?.resolve('/post/1').fullPath);
+
+function handleProtocol() {
+  window.open('/post/1', '_blank');
+}
 </script>
 
 <template>
@@ -307,7 +313,7 @@ const router = useRouter();
           <CusToggle label="记住账号" v-model="loginForm.remember" />
           <div v-if="loginForm.mode == 'login'">还未注册？<a href="javascript:void(0)" @click="handleChangeMode">点此立即注册</a><br /></div>
           <div v-if="loginForm.mode == 'register'">已有帐号？<a href="javascript:void(0)" @click="handleChangeMode">立即登录</a><br /></div>
-          我已阅读并同意<a :href="router.resolve('/post/1').fullPath" target="_blank">《X产品论坛用户协议》</a>
+          我已阅读并同意<a href="javascript:void(0)" @click.prevent="handleProtocol" target="_blank">《X产品论坛用户协议》</a>
         </div>
       </div>
     </template>
