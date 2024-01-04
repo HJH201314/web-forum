@@ -2,26 +2,32 @@
 import useUserStore from '@/stores/useUserStore';
 import { DEFAULT_USER_AVATAR } from '@/constants/defaultImage';
 import CusButton from '@/components/button/CusButton.vue';
-import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
 import PostItemCard from '@/pages/post/components/PostItemCard.vue';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import CusInput from '@/components/input/CusInput.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { useRouter } from 'vue-router';
 import useGlobal from '@/commands/useGlobal';
+import type { PostItemCardProps } from '@/pages/post/components/PostItemCard';
+import { delay } from '@/utils/delay';
+import adminApi from '@/apis/services/video-platform-admin';
+import showToast from '@/components/toast/toast';
+import { useIntersectionObserver } from '@vueuse/core';
+import { getUserInfo } from '@/stores/publicUserInfo';
+import { convertUserFile } from '@/pages/post/utils/image';
 
 const router = useRouter();
+// todo 进入时加载
 onMounted(() => {
   if (router.currentRoute.value.path == '/me/edit') {
     editing.value = true;
+  } else {
+    observeLoadMore.resume();
   }
 });
 
 const userStore = useUserStore(); // 通过useUserStore获取用户信息
-const origin_posts = ref<PostItemCardProps[]>([]); // 所有的帖子
-const posts = ref([]); // 要显示的帖子
-const hasNoMore = ref(false); // 是否还有更多帖子
 let editing = ref(false); // 是否正在编辑资料
 
 watch(() => editing.value, (newValue) => {
@@ -326,13 +332,26 @@ function edit() {
 const show = ref(0);
 
 // todo 显示我的帖子
+// todo 进入时即加载
+
+const origin_posts = ref<PostItemCardProps[]>([]); // 所有的帖子
+const posts = ref<PostItemCardProps[]>([]); // 要显示的帖子
+const tempPosts = ref<API.UpdateVo[]>(); // 中间值
+const hasNoMore = ref(false); // 是否还有更多帖子
+const currentPage = ref(0); // 当前页数
+const searchForm = reactive({
+  uid: ref(-1),
+  keyword: ref(''),
+});
 function showMyPosts() {
   changeBorderBottomColor('me-main-myPost', '#5C6BC0FF');
   changeBorderBottomColor('me-main-involved', 'transparent');
   show.value = 0;
+  console.log(origin_posts.value);
 }
 
 // todo 显示我参与的
+
 function showInvolved() {
   changeBorderBottomColor('me-main-involved', '#5C6BC0FF');
   changeBorderBottomColor('me-main-myPost', 'transparent');
@@ -357,9 +376,70 @@ function handlePostDeleted(id: number) {
 }
 
 // todo 加载更多
-function handleLoadMore() {
-
+async function handleLoadMore() {
+  currentPage.value++;
+  await getPosts();
+  await delay(100);
+  observeLoadMore.pause();
+  observeLoadMore.resume();
 }
+
+// 获取帖子
+async function getPosts() {
+  try {
+    const res = await adminApi.updatesController.getInPageUsingPost({
+      pageNum: currentPage.value,
+      pageSize: 10,
+    }, {
+      uid: userStore.userInfo?.id,
+      str: searchForm.keyword ? searchForm.keyword : undefined,
+    });
+    if (res.data.data?.length == 0) {
+      showToast({ type: 'info', text: '没有更多啦' });
+      hasNoMore.value = true;
+    }
+    tempPosts.value = res.data.data;
+    return res.data.data;
+  } catch (e) {
+    return [];
+  }
+}
+
+/* 无限加载控制 */
+const loadMoreRef = ref<HTMLDivElement>();
+const observeLoadMore = useIntersectionObserver(loadMoreRef, ([{ isIntersecting }]) => {
+  if (isIntersecting) {
+    console.log(currentPage.value);
+    handleLoadMore();
+  }
+}, {
+  threshold: 0,
+  immediate: false,
+});
+
+// 监听tempPost的变化
+watch(() => tempPosts.value, async () => {
+  if (!tempPosts.value?.length) return;
+  for (let item of tempPosts.value) {
+    if (item.vid) continue; // 此处不处理视频
+    const userInfo = await getUserInfo(item.uid ?? -1);
+    origin_posts.value.push({
+      type: 'post',
+      postId: item.id ?? -1,
+      userId: item.uid ?? -1,
+      userName: userInfo.name ?? '测试用户',
+      avatar: convertUserFile(userInfo.avatar) ?? `https://api.dicebear.com/7.x/bottts-neutral/svg?backgroundType=gradientLinear&seed=id${item.uid}`,
+      forwardCount: 0,
+      commentCount: 0,
+      likeCount: 0,
+      isLiked: item.isLiked ?? false,
+      createTime: item.uploadTime ? new Date(item.uploadTime).toLocaleString() : new Date().toLocaleString(),
+      images: JSON.parse(item.urls ?? '[]'),
+      content: item.content ? decodeURIComponent(item.content) : '',
+    });
+  }
+  tempPosts.value = []; // 处理完成后清空
+});
 
 // 修改头像
 function changeAvatar() {
