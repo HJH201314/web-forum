@@ -6,6 +6,7 @@ import { useLocalStorage } from "@vueuse/core";
 import { convertUserFile } from '@/pages/post/utils/image';
 import { delay } from '@/utils/delay';
 import { SHA256 } from 'crypto-js';
+import { getUserInfo } from '@/stores/publicUserInfo';
 
 const useUserStore = defineStore('user', () => {
 
@@ -25,10 +26,10 @@ const useUserStore = defineStore('user', () => {
 
   onMounted(async () => {
     // 获取用户信息
-    await getUserInfo();
+    await getCurrentUserInfo();
   });
 
-  async function getUserInfo() {
+  async function getCurrentUserInfo() {
     try {
       const res = await securityApi.loginController.getCurrentUserUsingGet({token: token.value});
       userInfoStorage.value = res.data.data ?? {};
@@ -48,7 +49,13 @@ const useUserStore = defineStore('user', () => {
       name: name,
     });
     if (res.data.code === 200) {
-      await getUserInfo();
+      await getCurrentUserInfo();
+      // 使用公共用户信息接口更新用户信息，避免登录缓存问题
+      getUserInfo(userInfo.value.id!).then(res => {
+        if (res.name !== userInfo.value.name) {
+          userInfoStorage.value.name = res.name;
+        }
+      });
       return true;
     }
     return false;
@@ -73,7 +80,18 @@ const useUserStore = defineStore('user', () => {
       });
       if (res2.data.code === 200) {
         delay(1000).then(() => {
-          getUserInfo();
+          getCurrentUserInfo();
+
+          // 延迟10秒，至少等待缓存更新
+          delay(10000).then(() => {
+            // 使用公共用户信息接口更新用户信息，避免登录缓存问题
+            getUserInfo(userInfo.value.id!).then(res => {
+              if (res.avatar !== userInfo.value.avatar) {
+                userInfoStorage.value.avatar = convertUserFile(res.avatar);
+                avatar.value = convertUserFile(res.avatar);
+              }
+            });
+          });
         });
         return true;
       }
@@ -92,7 +110,7 @@ const useUserStore = defineStore('user', () => {
       tokenStorage.value = res.data.data ?? '';
       await nextTick(() => {
         // 获取用户信息
-        getUserInfo();
+        getCurrentUserInfo();
       });
       return res?.data;
     } else {
