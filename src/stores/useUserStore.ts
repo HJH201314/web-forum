@@ -37,7 +37,7 @@ const useUserStore = defineStore('user', () => {
       userInfoStorage.value.avatar = avatar.value;
       // 使用公共用户信息接口更新头像，避免登录缓存问题
       getUserInfo(userInfo.value.id!).then(res => {
-        if (res.avatar !== userInfo.value.avatar) {
+        if (res.avatar && res.avatar !== userInfo.value.avatar) {
           userInfoStorage.value.avatar = convertUserFile(res.avatar);
           avatar.value = convertUserFile(res.avatar);
         }

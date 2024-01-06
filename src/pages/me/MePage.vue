@@ -625,7 +625,7 @@ function handleSendEmail() {
         <section class = "me-main-actions">
           <div class = "me-main-actions-title">
             <CusButton id = "me-main-myPost" text = "我的帖子" type = "text" @click = "showMyPosts"></CusButton>
-            <CusButton id = "me-main-involved" text = "我参与的" type = "text" @click = "showInvolved"></CusButton>
+<!--            <CusButton id = "me-main-involved" text = "我参与的" type = "text" @click = "showInvolved"></CusButton>-->
           </div>
         </section>
         <section class = "me-main-posts">

@@ -80,7 +80,11 @@ const buttonStyles = computed<CSSProperties[]>(() => {
 
 const router = useRouter();
 function handleBackClick() {
-  router.replace('/post');
+  if (router.currentRoute.value?.query?.from) {
+    window.location.href = decodeURIComponent(router.currentRoute.value.query.from as string);
+  } else {
+    router.replace('/post');
+  }
 }
 
 function handleLikeClick() {

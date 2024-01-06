@@ -224,6 +224,10 @@ function handlePreviewImage(image: string) {
 }
 
 const router = useRouter();
+
+function handleDetailClick() {
+  router.push(`/post/${props.postId}?from=${encodeURIComponent(window.location.href)}`);
+}
 </script>
 
 <template>
@@ -234,7 +238,7 @@ const router = useRouter();
     <div class="post-list-item-header">
       <div class="username">{{ props.userName }}</div>
       <div class="desc"><DateFormat :date="props.createTime" /> · {{ postTypeDesc }}<span v-if="!props.singleUse"> ·
-        <a href="javascript:void(0)" @click="router.push(`/post/${props.postId}`)">详情>></a>
+        <a href="javascript:void(0)" @click="handleDetailClick">详情>></a>
       </span></div>
       <CusPopover class="more" position="left">
         <template #body>
