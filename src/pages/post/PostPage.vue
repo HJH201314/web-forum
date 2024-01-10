@@ -289,6 +289,10 @@ function handlePostDeleted(id: number) {
 }
 
 async function handleLoadMore() {
+  if (hasNoMore.value) {
+    ToastManager.normal('没有更多啦ㄟ( ▔, ▔ )ㄏ');
+    return;
+  }
   currentPage.value++;
   await getPosts();
   await delay(100);
@@ -477,8 +481,9 @@ const globe = useGlobal();
                         @delete-post="(id) => handlePostDeleted(id)"
           />
 <!--          <div class="post-loading" v-if="postQueryStatus == 'pending'">加载中...</div>-->
-          <div class="load-more" v-if="hasNoMore && !posts.length" @click="router.replace('/post')">这里空空如也，不如点我返回首页吧ㄟ( ▔, ▔ )ㄏ</div>
+          <div class="load-more" v-if="hasNoMore && !posts.length && searchForm.keyword" @click="router.replace('/post')">这里空空如也，不如点我返回首页吧ㄟ( ▔, ▔ )ㄏ</div>
           <div ref="loadMoreRef" class="load-more" v-if="!hasNoMore" @click="handleLoadMore">加载更多...</div>
+          <div class="load-more" v-if="hasNoMore && !posts.length && !searchForm.keyword" @click="handleLoadMore">没有更多了ㄟ( ▔, ▔ )ㄏ</div>
         </section>
       </main>
       <aside class="post-right" v-if="globe.isLargeScreen">

@@ -503,7 +503,7 @@ const globe = useGlobal();
         <div class="body">
           <div class="header user-info">
             <span class="name">{{ comment.userName }}</span>
-            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>
+<!--            <span class="level" v-if="comment.userLevel">Lv.{{ comment.userLevel }}</span>-->
             <span class="top" v-if="likeCacheStore.isLiked('top:' + comment.id)">置顶</span>
           </div>
           <div class="content">{{ comment.content }}</div>
